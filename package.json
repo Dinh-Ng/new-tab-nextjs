@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lintFix": "next lint --fix",
+    "checkTS": "node_modules/.bin/tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
