@@ -46,6 +46,7 @@ export default function Component() {
   const [deadlineType, setDeadlineType] = useState<DeadlineType>("date")
   const [remainingDays, setRemainingDays] = useState("")
   const [remainingHours, setRemainingHours] = useState("")
+  const [remainingMinutes, setRemainingMinutes] = useState("")
 
   useEffect(() => {
     const storedTasks = localStorage.getItem('tasks')
@@ -97,7 +98,12 @@ export default function Component() {
       let taskToSave = { ...editingTask }
       if (deadlineType === "remaining") {
         const now = new Date()
-        const deadline = new Date(now.getTime() + (parseInt(remainingDays) * 24 * 60 * 60 * 1000) + (parseInt(remainingHours) * 60 * 60 * 1000))
+        const deadline = new Date(
+          now.getTime() +
+          (parseInt(remainingDays) * 24 * 60 * 60 * 1000) +
+          (parseInt(remainingHours) * 60 * 60 * 1000) +
+          (parseInt(remainingMinutes) * 60 * 1000)
+        )
         taskToSave.endDate = deadline.toISOString().split('T')[0]
         taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
       }
@@ -114,6 +120,7 @@ export default function Component() {
       setDeadlineType("date")
       setRemainingDays("")
       setRemainingHours("")
+      setRemainingMinutes("")
     }
   }
 
@@ -123,9 +130,10 @@ export default function Component() {
     const diff = deadline.getTime() - now.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     const isLessThanOneDay = diff < 24 * 60 * 60 * 1000
     const isOverdue = diff < 0
-    return { days, hours, isLessThanOneDay, isOverdue }
+    return { days, hours, minutes, isLessThanOneDay, isOverdue }
   }
 
   const toggleTaskDone = (id: number) => {
@@ -179,6 +187,7 @@ export default function Component() {
               setDeadlineType("date")
               setRemainingDays("")
               setRemainingHours("")
+              setRemainingMinutes("")
             }
           }}>
             <DialogTrigger asChild>
@@ -268,6 +277,19 @@ export default function Component() {
                         className="dark:bg-gray-700 dark:text-white"
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="remainingMinutes" className="dark:text-gray-200">Minutes</Label>
+                      <Input
+                        id="remainingMinutes"
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={remainingMinutes}
+                        onChange={(e) => setRemainingMinutes(e.target.value)}
+                        required
+                        className="dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
                   </div>
                 )}
                 <div>
@@ -318,11 +340,12 @@ export default function Component() {
         </div>
         <div className="space-y-4">
           {filteredAndSortedTasks.map((task) => {
-            const { days, hours, isLessThanOneDay, isOverdue } = calculateTimeLeft(task.endDate, task.endTime)
+            const { days, hours, minutes, isLessThanOneDay, isOverdue } = calculateTimeLeft(task.endDate, task.endTime)
             return (
               <div
                 key={task.id}
                 className={`border rounded-lg py-2 p-4 flex justify-between items-center ${
+
                   task.isDone ? "bg-muted dark:bg-gray-800" : "dark:bg-gray-700"
                 }`}
               >
@@ -340,7 +363,7 @@ export default function Component() {
                         </Badge>
                       ))}
                     </div>
-                    <h2 className={`text-lg font-semibold ${task.isDone ? "line-through" : ""} ${isLessThanOneDay || isOverdue ? "text-red-500  dark:text-red-400" : "dark:text-white"}`}>
+                    <h2 className={`text-lg font-semibold ${task.isDone ? "line-through" : ""} ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "dark:text-white"}`}>
                       {task.name}
                     </h2>
                   </div>
@@ -349,7 +372,7 @@ export default function Component() {
                   <p className={`text-sm ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "text-muted-foreground dark:text-gray-300"}`}>
                     {isOverdue
                       ? `Overdue (${task.endDate})`
-                      : `${days} days, ${hours} hours left`
+                      : `${days}d ${hours}h ${minutes}m left`
                     }
                   </p>
                   <Button variant="ghost" size="icon" onClick={() => editTask(task)}>
