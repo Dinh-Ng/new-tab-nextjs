@@ -345,53 +345,54 @@ export default function Component() {
             </div>
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1  md:grid-cols-2 gap-4">
           {filteredAndSortedTasks.map((task) => {
             const { days, hours, minutes, isLessThanOneDay, isOverdue } = calculateTimeLeft(task.endDate, task.endTime)
             return (
               <div
                 key={task.id}
-                className={`border rounded-lg py-2 p-4 flex justify-between items-center ${
-
+                className={`border rounded-lg py-2 p-4 flex flex-col justify-between ${
                   task.isDone ? "bg-muted dark:bg-gray-800" : "dark:bg-gray-700"
                 }`}
               >
-                <div className="flex items-center space-x-4">
-                  <Checkbox
-                    id={`task-${task.id}`}
-                    checked={task.isDone}
-                    onCheckedChange={() => toggleTaskDone(task.id)}
-                  />
-                  <div>
-                    <div className="flex space-x-2 mt-2">
-                      {task.tags.map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-sm font-semibold px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
+                <div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Checkbox
+                      id={`task-${task.id}`}
+                      checked={task.isDone}
+                      onCheckedChange={() => toggleTaskDone(task.id)}
+                    />
                     <h2 className={`text-lg font-semibold ${task.isDone ? "line-through" : ""} ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "dark:text-white"}`}>
                       {task.name}
                     </h2>
                   </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {task.tags.map((tag, index) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="text-sm font-semibold px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex justify-between items-center mt-2">
                   <p className={`text-sm ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "text-muted-foreground dark:text-gray-300"}`}>
                     {isOverdue
                       ? `Overdue (${task.endDate})`
                       : `${days}d ${hours}h ${minutes}m left`
                     }
                   </p>
-                  <Button variant="ghost" size="icon" onClick={() => editTask(task)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteTask(task.id)}>
-                    <Trash className="h-4 w-4" />
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="icon" onClick={() => editTask(task)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteTask(task.id)}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )
