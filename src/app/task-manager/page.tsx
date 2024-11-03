@@ -35,6 +35,15 @@ interface Task {
 type SortOption = "endDate" | "created" | "name"
 type DeadlineType = "date" | "remaining"
 
+const stringToColor = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = hash % 360;
+  return `hsl(${hue}, 70%, 50%)`;
+}
+
 export default function Component() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -380,7 +389,11 @@ export default function Component() {
                         <Badge
                           key={index}
                           variant="outline"
-                          className="text-sm font-semibold px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          style={{
+                            color: stringToColor(tag),
+                            borderColor: stringToColor(tag),
+                          }}
+                          className="text-sm font-semibold px-3 py-1 hover:bg-opacity-10 hover:bg-current transition-colors"
                         >
                           {tag}
                         </Badge>
