@@ -183,13 +183,14 @@ export default function Component() {
   return (
     <div className={`min-h-screen w-full ${darkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
       <div className="container mx-auto p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold mb-4 dark:text-white">Task Management</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold dark:text-white">Task Management</h1>
           <Button variant="outline" size="icon" onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
           </Button>
         </div>
-        <div className="flex justify-between items-center mb-4">
+
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Dialog open={isOpen} onOpenChange={(open) => {
             setIsOpen(open)
             if (!open) {
@@ -201,7 +202,10 @@ export default function Component() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditingTask({ id: 0, name: "", endDate: "", endTime: "", tags: [], isDone: false })}>
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => setEditingTask({ id: 0, name: "", endDate: "", endTime: "", tags: [], isDone: false })}
+              >
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Task
               </Button>
             </DialogTrigger>
@@ -313,11 +317,12 @@ export default function Component() {
               </form>
             </DialogContent>
           </Dialog>
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center">
-              <Filter className="mr-2 h-4 w-4" />
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <div className="flex items-center w-full sm:w-[180px]">
+              <Filter className="mr-2 h-4 w-4 shrink-0" />
               <Select onValueChange={(value) => setFilterTag(value === "all" ? null : value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Filter by tag" />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,62 +335,70 @@ export default function Component() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center">
-              <Clock className="mr-2 h-4 w-4" />
+
+            <div className="flex items-center w-full sm:w-[180px]">
+              <Clock className="mr-2 h-4 w-4 shrink-0" />
               <Select onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="endDate">End Date</SelectItem>
                   <SelectItem value="created">Created Date</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem  value="name">Name</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1  md:grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredAndSortedTasks.map((task) => {
             const { days, hours, minutes, isLessThanOneDay, isOverdue } = calculateTimeLeft(task.endDate, task.endTime)
             return (
               <div
                 key={task.id}
-                className={`border rounded-lg py-2 p-4 flex flex-col justify-between ${
+                className={`border rounded-lg p-4 flex flex-col ${
                   task.isDone ? "bg-muted dark:bg-gray-800" : "dark:bg-gray-700"
                 }`}
               >
-                <div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Checkbox
-                      id={`task-${task.id}`}
-                      checked={task.isDone}
-                      onCheckedChange={() => toggleTaskDone(task.id)}
-                    />
-                    <h2 className={`text-lg font-semibold ${task.isDone ? "line-through" : ""} ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "dark:text-white"}`}>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id={`task-${task.id}`}
+                    checked={task.isDone}
+                    onCheckedChange={() => toggleTaskDone(task.id)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h2 className={`text-lg font-semibold break-words ${
+                      task.isDone ? "line-through" : ""
+                    } ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "dark:text-white"}`}>
                       {task.name}
                     </h2>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {task.tags.map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="text-sm font-semibold px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {task.tags.map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-sm font-semibold px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <p className={`text-sm ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "text-muted-foreground dark:text-gray-300"}`}>
+
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-4">
+                  <p className={`text-sm ${
+                    isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "text-muted-foreground dark:text-gray-300"
+                  }`}>
                     {isOverdue
                       ? `Overdue (${task.endDate})`
                       : `${days}d ${hours}h ${minutes}m left`
                     }
                   </p>
-                  <div className="flex space-x-2">
+                  <div className="flex gap-2">
                     <Button variant="ghost" size="icon" onClick={() => editTask(task)}>
                       <Edit className="h-4 w-4" />
                     </Button>
