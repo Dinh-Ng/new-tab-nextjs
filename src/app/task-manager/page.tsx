@@ -358,7 +358,11 @@ export default function Component() {
                   <div>
                     <div className="flex space-x-2 mt-2">
                       {task.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-sm font-semibold px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
                           {tag}
                         </Badge>
                       ))}
