@@ -97,12 +97,22 @@ export default function Component() {
     if (editingTask) {
       let taskToSave = { ...editingTask }
       if (deadlineType === "remaining") {
+        const days = remainingDays === "" ? 0 : parseInt(remainingDays)
+        const hours = remainingHours === "" ? 0 : parseInt(remainingHours)
+        const minutes = remainingMinutes === "" ? 0 : parseInt(remainingMinutes)
+
+        if (days === 0 && hours === 0 && minutes === 0) {
+          // Show error message
+          alert("Please input at least one value for days, hours, or minutes.")
+          return
+        }
+
         const now = new Date()
         const deadline = new Date(
           now.getTime() +
-          (parseInt(remainingDays) * 24 * 60 * 60 * 1000) +
-          (parseInt(remainingHours) * 60 * 60 * 1000) +
-          (parseInt(remainingMinutes) * 60 * 1000)
+          (days * 24 * 60 * 60 * 1000) +
+          (hours * 60 * 60 * 1000) +
+          (minutes * 60 * 1000)
         )
         taskToSave.endDate = deadline.toISOString().split('T')[0]
         taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
@@ -260,7 +270,6 @@ export default function Component() {
                         min="0"
                         value={remainingDays}
                         onChange={(e) => setRemainingDays(e.target.value)}
-                        required
                         className="dark:bg-gray-700 dark:text-white"
                       />
                     </div>
@@ -273,7 +282,6 @@ export default function Component() {
                         max="23"
                         value={remainingHours}
                         onChange={(e) => setRemainingHours(e.target.value)}
-                        required
                         className="dark:bg-gray-700 dark:text-white"
                       />
                     </div>
@@ -286,7 +294,6 @@ export default function Component() {
                         max="59"
                         value={remainingMinutes}
                         onChange={(e) => setRemainingMinutes(e.target.value)}
-                        required
                         className="dark:bg-gray-700 dark:text-white"
                       />
                     </div>
