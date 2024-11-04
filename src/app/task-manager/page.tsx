@@ -35,13 +35,15 @@ interface Task {
 type SortOption = "endDate" | "created" | "name"
 type DeadlineType = "date" | "remaining"
 
-const stringToColor = (str: string) => {
+const stringToColor = (str: string, isDark: boolean) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
   const hue = hash % 360;
-  return `hsl(${hue}, 70%, 50%)`;
+  return isDark
+    ? `hsl(${hue}, 80%, 75%)` // Brighter colors for dark mode
+    : `hsl(${hue}, 70%, 45%)`; // Darker colors for light mode
 }
 
 export default function Component() {
@@ -390,8 +392,8 @@ export default function Component() {
                           key={index}
                           variant="outline"
                           style={{
-                            color: stringToColor(tag),
-                            borderColor: stringToColor(tag),
+                            color: stringToColor(tag, darkMode),
+                            borderColor: stringToColor(tag, darkMode),
                           }}
                           className="text-sm font-semibold px-3 py-1 hover:bg-opacity-10 hover:bg-current transition-colors"
                         >
