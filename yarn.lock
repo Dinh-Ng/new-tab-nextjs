@@ -3497,6 +3497,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-config-prettier@npm:^9.1.0":
+  version: 9.1.0
+  resolution: "eslint-config-prettier@npm:9.1.0"
+  peerDependencies:
+    eslint: ">=7.0.0"
+  bin:
+    eslint-config-prettier: bin/cli.js
+  checksum: 9229b768c879f500ee54ca05925f31b0c0bafff3d9f5521f98ff05127356de78c81deb9365c86a5ec4efa990cb72b74df8612ae15965b14136044c73e1f6a907
+  languageName: node
+  linkType: hard
+
 "eslint-import-resolver-node@npm:^0.3.6, eslint-import-resolver-node@npm:^0.3.9":
   version: 0.3.9
   resolution: "eslint-import-resolver-node@npm:0.3.9"
@@ -3633,6 +3644,18 @@ __metadata:
   peerDependencies:
     eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
   checksum: 7f5203afee7fbe3702b27fdd2b9a3c0ccbbb47d0672f58311b9d8a08dea819c9da4a87c15e8bd508f2562f327a9d29ee8bd9cd189bf758d8dc903de5648b0bfa
+  languageName: node
+  linkType: hard
+
+"eslint-plugin-tailwindcss@npm:^3.17.5":
+  version: 3.17.5
+  resolution: "eslint-plugin-tailwindcss@npm:3.17.5"
+  dependencies:
+    fast-glob: ^3.2.5
+    postcss: ^8.4.4
+  peerDependencies:
+    tailwindcss: ^3.4.0
+  checksum: d1205b640bd3d4224f9e5905f5699b8ebd5999e8ffc921e64bed82bc9ce4761b0e5b55699649e936a71740dd1f5de70b848a26a840b15fc14b0659920d85ec48
   languageName: node
   linkType: hard
 
@@ -3785,7 +3808,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:^3.3.0, fast-glob@npm:^3.3.2":
+"fast-glob@npm:^3.2.5, fast-glob@npm:^3.3.0, fast-glob@npm:^3.3.2":
   version: 3.3.2
   resolution: "fast-glob@npm:3.3.2"
   dependencies:
@@ -5045,6 +5068,8 @@ __metadata:
     embla-carousel-react: ^8.3.0
     eslint: ^8
     eslint-config-next: 15.0.1
+    eslint-config-prettier: ^9.1.0
+    eslint-plugin-tailwindcss: ^3.17.5
     input-otp: ^1.2.4
     lucide-react: ^0.454.0
     next: 15.0.1
@@ -5488,7 +5513,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8, postcss@npm:^8.4.23":
+"postcss@npm:^8, postcss@npm:^8.4.23, postcss@npm:^8.4.4":
   version: 8.4.47
   resolution: "postcss@npm:8.4.47"
   dependencies:

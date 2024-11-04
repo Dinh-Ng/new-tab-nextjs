@@ -1,26 +1,26 @@
-"use client";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+'use client'
+import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function DynamicTitle() {
-  const [title, setTitle] = useState("xxx");
-  const pathname = usePathname();
+  const [title, setTitle] = useState('xxx')
+  const pathname = usePathname()
 
   useEffect(() => {
     switch (pathname) {
-      case "default title":
-        setTitle("default title");
+      case 'default title':
+        setTitle('default title')
         break
 
       case '/task-manager':
-        setTitle("Task manager");
+        setTitle('Task manager')
         break
 
       default:
-        setTitle("default title");
+        setTitle('default title')
         break
     }
-  }, [pathname]);
+  }, [pathname])
 
-  return <title>{title}</title>;
+  return <title>{title}</title>
 }

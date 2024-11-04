@@ -1,4 +1,4 @@
-import { Bookmark, ListTodo } from "lucide-react";
+import { Bookmark, ListTodo } from 'lucide-react'
 
 import {
   Sidebar,
@@ -9,22 +9,22 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar'
 
 // Menu items.
 const items = [
   {
-    title: "Task Manager",
-    url: "/task-manager",
+    title: 'Task Manager',
+    url: '/task-manager',
     icon: ListTodo,
     isActive: true,
   },
   {
-    title: "Bookmarks",
-    url: "#",
+    title: 'Bookmarks',
+    url: '#',
     icon: Bookmark,
   },
-];
+]
 
 export function AppSidebar() {
   return (
@@ -49,5 +49,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }

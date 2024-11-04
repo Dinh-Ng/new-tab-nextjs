@@ -1,27 +1,27 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { PlusCircle, Filter, Edit, Trash, Clock, Moon, Sun } from "lucide-react"
+} from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
+import { PlusCircle, Filter, Edit, Trash, Clock, Moon, Sun } from 'lucide-react'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+} from '@/components/ui/select'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 interface Task {
   id: number
@@ -32,18 +32,18 @@ interface Task {
   isDone: boolean
 }
 
-type SortOption = "endDate" | "created" | "name"
-type DeadlineType = "date" | "remaining"
+type SortOption = 'endDate' | 'created' | 'name'
+type DeadlineType = 'date' | 'remaining'
 
 const stringToColor = (str: string, isDark: boolean) => {
-  let hash = 0;
+  let hash = 0
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
   }
-  const hue = hash % 360;
+  const hue = hash % 360
   return isDark
     ? `hsl(${hue}, 80%, 75%)` // Brighter colors for dark mode
-    : `hsl(${hue}, 70%, 45%)`; // Darker colors for light mode
+    : `hsl(${hue}, 70%, 45%)` // Darker colors for light mode
 }
 
 export default function Component() {
@@ -51,13 +51,13 @@ export default function Component() {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [filterTag, setFilterTag] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState<SortOption>("endDate")
+  const [sortBy, setSortBy] = useState<SortOption>('endDate')
   const [allTags, setAllTags] = useState<string[]>([])
   const [darkMode, setDarkMode] = useState(false)
-  const [deadlineType, setDeadlineType] = useState<DeadlineType>("date")
-  const [remainingDays, setRemainingDays] = useState("")
-  const [remainingHours, setRemainingHours] = useState("")
-  const [remainingMinutes, setRemainingMinutes] = useState("")
+  const [deadlineType, setDeadlineType] = useState<DeadlineType>('date')
+  const [remainingDays, setRemainingDays] = useState('')
+  const [remainingHours, setRemainingHours] = useState('')
+  const [remainingMinutes, setRemainingMinutes] = useState('')
 
   useEffect(() => {
     const storedTasks = localStorage.getItem('tasks')
@@ -90,16 +90,16 @@ export default function Component() {
     if (editingTask) {
       setEditingTask({ ...editingTask, [name]: value })
     } else {
-      setEditingTask({ id: 0, name: "", endDate: "", endTime: "", tags: [], isDone: false, [name]: value })
+      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, [name]: value })
     }
   }
 
   const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const tags = e.target.value.split(",").map((tag) => tag.trim())
+    const tags = e.target.value.split(',').map((tag) => tag.trim())
     if (editingTask) {
       setEditingTask({ ...editingTask, tags })
     } else {
-      setEditingTask({ id: 0, name: "", endDate: "", endTime: "", tags, isDone: false })
+      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags, isDone: false })
     }
   }
 
@@ -107,14 +107,14 @@ export default function Component() {
     e.preventDefault()
     if (editingTask) {
       let taskToSave = { ...editingTask }
-      if (deadlineType === "remaining") {
-        const days = remainingDays === "" ? 0 : parseInt(remainingDays)
-        const hours = remainingHours === "" ? 0 : parseInt(remainingHours)
-        const minutes = remainingMinutes === "" ? 0 : parseInt(remainingMinutes)
+      if (deadlineType === 'remaining') {
+        const days = remainingDays === '' ? 0 : parseInt(remainingDays)
+        const hours = remainingHours === '' ? 0 : parseInt(remainingHours)
+        const minutes = remainingMinutes === '' ? 0 : parseInt(remainingMinutes)
 
         if (days === 0 && hours === 0 && minutes === 0) {
           // Show error message
-          alert("Please input at least one value for days, hours, or minutes.")
+          alert('Please input at least one value for days, hours, or minutes.')
           return
         }
 
@@ -138,10 +138,10 @@ export default function Component() {
       }
       setEditingTask(null)
       setIsOpen(false)
-      setDeadlineType("date")
-      setRemainingDays("")
-      setRemainingHours("")
-      setRemainingMinutes("")
+      setDeadlineType('date')
+      setRemainingDays('')
+      setRemainingHours('')
+      setRemainingMinutes('')
     }
   }
 
@@ -172,14 +172,14 @@ export default function Component() {
   const editTask = (task: Task) => {
     setEditingTask(task)
     setIsOpen(true)
-    setDeadlineType("date")
+    setDeadlineType('date')
   }
 
   const sortTasks = (tasks: Task[]): Task[] => {
     return tasks.sort((a, b) => {
-      if (sortBy === "endDate") {
+      if (sortBy === 'endDate') {
         return new Date(`${a.endDate}T${a.endTime}`).getTime() - new Date(`${b.endDate}T${b.endTime}`).getTime()
-      } else if (sortBy === "created") {
+      } else if (sortBy === 'created') {
         return a.id - b.id
       } else {
         return a.name.localeCompare(b.name)
@@ -194,36 +194,36 @@ export default function Component() {
   return (
     <div className={`min-h-screen w-full ${darkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
       <div className="container mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold dark:text-white">Task Management</h1>
           <Button variant="outline" size="icon" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
+            {darkMode ? <Sun className="size-[1.2rem]" /> : <Moon className="size-[1.2rem]" />}
           </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row">
           <Dialog open={isOpen} onOpenChange={(open) => {
             setIsOpen(open)
             if (!open) {
               setEditingTask(null)
-              setDeadlineType("date")
-              setRemainingDays("")
-              setRemainingHours("")
-              setRemainingMinutes("")
+              setDeadlineType('date')
+              setRemainingDays('')
+              setRemainingHours('')
+              setRemainingMinutes('')
             }
           }}>
             <DialogTrigger asChild>
               <Button
                 className="w-full sm:w-auto"
-                onClick={() => setEditingTask({ id: 0, name: "", endDate: "", endTime: "", tags: [], isDone: false })}
+                onClick={() => setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false })}
               >
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New Task
+                <PlusCircle className="mr-2 size-4" /> Add New Task
               </Button>
             </DialogTrigger>
             <DialogContent className="dark:bg-gray-800 dark:text-white">
               <DialogHeader>
                 <DialogTitle className="dark:text-white">
-                  {editingTask && editingTask.id !== 0 ? "Edit Task" : "Create New Task"}
+                  {editingTask && editingTask.id !== 0 ? 'Edit Task' : 'Create New Task'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -232,7 +232,7 @@ export default function Component() {
                   <Input
                     id="name"
                     name="name"
-                    value={editingTask?.name || ""}
+                    value={editingTask?.name || ''}
                     onChange={handleInputChange}
                     required
                     className="dark:bg-gray-700 dark:text-white"
@@ -248,7 +248,7 @@ export default function Component() {
                     <Label htmlFor="remaining">Remaining Time</Label>
                   </div>
                 </RadioGroup>
-                {deadlineType === "date" ? (
+                {deadlineType === 'date' ? (
                   <>
                     <div>
                       <Label htmlFor="endDate" className="dark:text-gray-200">End Date</Label>
@@ -256,7 +256,7 @@ export default function Component() {
                         id="endDate"
                         name="endDate"
                         type="date"
-                        value={editingTask?.endDate || ""}
+                        value={editingTask?.endDate || ''}
                         onChange={handleInputChange}
                         required
                         className="dark:bg-gray-700 dark:text-white"
@@ -268,7 +268,7 @@ export default function Component() {
                         id="endTime"
                         name="endTime"
                         type="time"
-                        value={editingTask?.endTime || ""}
+                        value={editingTask?.endTime || ''}
                         onChange={handleInputChange}
                         required
                         className="dark:bg-gray-700 dark:text-white"
@@ -319,20 +319,20 @@ export default function Component() {
                   <Input
                     id="tags"
                     name="tags"
-                    value={editingTask?.tags.join(", ") || ""}
+                    value={editingTask?.tags.join(', ') || ''}
                     onChange={handleTagsChange}
                     className="dark:bg-gray-700 dark:text-white"
                   />
                 </div>
-                <Button type="submit">{editingTask && editingTask.id !== 0 ? "Update Task" : "Create Task"}</Button>
+                <Button type="submit">{editingTask && editingTask.id !== 0 ? 'Update Task' : 'Create Task'}</Button>
               </form>
             </DialogContent>
           </Dialog>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <div className="flex items-center w-full sm:w-[180px]">
-              <Filter className="mr-2 h-4 w-4 shrink-0" />
-              <Select onValueChange={(value) => setFilterTag(value === "all" ? null : value)}>
+          <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
+            <div className="flex w-full items-center sm:w-[180px]">
+              <Filter className="mr-2 size-4 shrink-0" />
+              <Select onValueChange={(value) => setFilterTag(value === 'all' ? null : value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Filter by tag" />
                 </SelectTrigger>
@@ -347,8 +347,8 @@ export default function Component() {
               </Select>
             </div>
 
-            <div className="flex items-center w-full sm:w-[180px]">
-              <Clock className="mr-2 h-4 w-4 shrink-0" />
+            <div className="flex w-full items-center sm:w-[180px]">
+              <Clock className="mr-2 size-4 shrink-0" />
               <Select onValueChange={(value) => setSortBy(value as SortOption)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Sort by" />
@@ -363,14 +363,14 @@ export default function Component() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredAndSortedTasks.map((task) => {
             const { days, hours, minutes, isLessThanOneDay, isOverdue } = calculateTimeLeft(task.endDate, task.endTime)
             return (
               <div
                 key={task.id}
-                className={`border rounded-lg p-4 flex flex-col ${
-                  task.isDone ? "bg-muted dark:bg-gray-800" : "dark:bg-gray-700"
+                className={`flex flex-col rounded-lg border p-4 ${
+                  task.isDone ? 'bg-muted dark:bg-gray-800' : 'dark:bg-gray-700'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -380,13 +380,13 @@ export default function Component() {
                     onCheckedChange={() => toggleTaskDone(task.id)}
                     className="mt-1"
                   />
-                  <div className="flex-1 min-w-0">
-                    <h2 className={`text-lg font-semibold break-words ${
-                      task.isDone ? "line-through" : ""
-                    } ${isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "dark:text-white"}`}>
+                  <div className="min-w-0 flex-1">
+                    <h2 className={`break-words text-lg font-semibold ${
+                      task.isDone ? 'line-through' : ''
+                    } ${isLessThanOneDay || isOverdue ? 'text-red-500 dark:text-red-400' : 'dark:text-white'}`}>
                       {task.name}
                     </h2>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
                       {task.tags.map((tag, index) => (
                         <Badge
                           key={index}
@@ -395,7 +395,7 @@ export default function Component() {
                             color: stringToColor(tag, darkMode),
                             borderColor: stringToColor(tag, darkMode),
                           }}
-                          className="text-sm font-semibold px-3 py-1 hover:bg-opacity-10 hover:bg-current transition-colors"
+                          className="px-3 py-1 text-sm font-semibold transition-colors hover:bg-current hover:bg-opacity-10"
                         >
                           {tag}
                         </Badge>
@@ -404,9 +404,9 @@ export default function Component() {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-4">
+                <div className="mt-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                   <p className={`text-sm ${
-                    isLessThanOneDay || isOverdue ? "text-red-500 dark:text-red-400" : "text-muted-foreground dark:text-gray-300"
+                    isLessThanOneDay || isOverdue ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground dark:text-gray-300'
                   }`}>
                     {isOverdue
                       ? `Overdue (${task.endDate})`
@@ -415,10 +415,10 @@ export default function Component() {
                   </p>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="icon" onClick={() => editTask(task)}>
-                      <Edit className="h-4 w-4" />
+                      <Edit className="size-4" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteTask(task.id)}>
-                      <Trash className="h-4 w-4" />
+                      <Trash className="size-4" />
                     </Button>
                   </div>
                 </div>
