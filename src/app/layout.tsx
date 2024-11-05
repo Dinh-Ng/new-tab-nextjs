@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import localFont from 'next/font/local'
+import { JetBrains_Mono } from 'next/font/google'
 
 import './globals.css'
 
@@ -8,16 +8,7 @@ import DynamicTitle from '@/feature/DynamicTitle'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
-})
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
-})
+const jetbrain_mono = JetBrains_Mono({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -32,9 +23,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <DynamicTitle />
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${jetbrain_mono.className}`}>
         <SidebarProvider>
           <AppSidebar />
           <main className="w-full">
