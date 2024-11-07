@@ -388,7 +388,9 @@ export default function Component() {
                   }`}>
                     {isOverdue
                       ? `Overdue (${task.endDate})`
-                      : `${days}d ${hours}h ${minutes}m left`
+                      : days > 0
+                        ? `${days}d ${hours}h ${minutes}m left`
+                        : `${hours}h ${minutes}m left`
                     }
                   </p>
                   <div className="flex gap-2">
