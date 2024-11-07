@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { PlusCircle, Filter, Edit, Trash, Clock, Moon, Sun } from 'lucide-react'
+import { PlusCircle, Filter, Edit, Trash, Moon, Sun } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -32,7 +32,6 @@ interface Task {
   isDone: boolean
 }
 
-type SortOption = 'endDate' | 'created' | 'name'
 type DeadlineType = 'date' | 'remaining'
 
 const stringToColor = (str: string, isDark: boolean) => {
@@ -51,7 +50,6 @@ export default function Component() {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [filterTag, setFilterTag] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState<SortOption>('endDate')
   const [allTags, setAllTags] = useState<string[]>([])
   const [darkMode, setDarkMode] = useState(false)
   const [deadlineType, setDeadlineType] = useState<DeadlineType>('date')
@@ -177,13 +175,7 @@ export default function Component() {
 
   const sortTasks = (tasks: Task[]): Task[] => {
     return tasks.sort((a, b) => {
-      if (sortBy === 'endDate') {
-        return new Date(`${a.endDate}T${a.endTime}`).getTime() - new Date(`${b.endDate}T${b.endTime}`).getTime()
-      } else if (sortBy === 'created') {
-        return a.id - b.id
-      } else {
-        return a.name.localeCompare(b.name)
-      }
+      return new Date(`${a.endDate}T${a.endTime}`).getTime() - new Date(`${b.endDate}T${b.endTime}`).getTime()
     })
   }
 
@@ -329,34 +321,20 @@ export default function Component() {
             </DialogContent>
           </Dialog>
 
-          <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-            <div className="flex w-full items-center sm:w-[180px]">
+          <div className="flex w-full flex-col gap-4 sm:flex-row">
+            <div className="flex w-full items-center sm:w-[250px]">
               <Filter className="mr-2 size-4 shrink-0" />
               <Select onValueChange={(value) => setFilterTag(value === 'all' ? null : value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Filter by tag" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
                   <SelectItem value="all">All Tags</SelectItem>
                   {allTags.map((tag) => (
                     <SelectItem key={tag} value={tag}>
                       {tag}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex w-full items-center sm:w-[180px]">
-              <Clock className="mr-2 size-4 shrink-0" />
-              <Select onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="endDate">End Date</SelectItem>
-                  <SelectItem value="created">Created Date</SelectItem>
-                  <SelectItem  value="name">Name</SelectItem>
                 </SelectContent>
               </Select>
             </div>
