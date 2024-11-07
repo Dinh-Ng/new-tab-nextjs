@@ -30,6 +30,7 @@ interface Task {
   endTime: string
   tags: string[]
   isDone: boolean
+  important: boolean
 }
 
 type DeadlineType = 'date' | 'remaining'
@@ -98,7 +99,7 @@ export default function Component() {
     if (editingTask) {
       setEditingTask({ ...editingTask, [name]: value })
     } else {
-      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, [name]: value })
+      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, important: false, [name]: value })
     }
   }
 
@@ -107,14 +108,14 @@ export default function Component() {
     if (editingTask) {
       setEditingTask({ ...editingTask, tags })
     } else {
-      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags, isDone: false })
+      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags, isDone: false, important: false })
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (editingTask) {
-      let taskToSave = { ...editingTask }
+      let taskToSave = { ...editingTask, important: editingTask?.important || false }
       if (deadlineType === 'remaining') {
         const days = remainingDays === '' ? 0 : parseInt(remainingDays)
         const hours = remainingHours === '' ? 0 : parseInt(remainingHours)
@@ -217,7 +218,7 @@ export default function Component() {
             <DialogTrigger asChild>
               <Button
                 className="w-full sm:w-auto"
-                onClick={() => setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false })}
+                onClick={() => setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, important: false })}
               >
                 <PlusCircle className="mr-2 size-4" /> Add New Task
               </Button>
@@ -326,6 +327,18 @@ export default function Component() {
                     className="dark:bg-gray-700 dark:text-white"
                   />
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="important"
+                    checked={editingTask?.important || false}
+                    onCheckedChange={(checked) => {
+                      if (editingTask?.id) {
+                        setEditingTask({...editingTask, ...{important: checked as boolean} })
+                      }
+                    }}
+                  />
+                  <Label htmlFor="important" className="dark:text-gray-200">IMPORTANT</Label>
+                </div>
                 <Button type="submit">{editingTask && editingTask.id !== 0 ? 'Update Task' : 'Create Task'}</Button>
               </form>
             </DialogContent>
@@ -371,7 +384,13 @@ export default function Component() {
                   <div className="min-w-0 flex-1">
                     <h2 className={`break-words text-lg font-semibold ${
                       task.isDone ? 'line-through' : ''
-                    } ${isLessThanOneDay || isOverdue ? 'text-red-500 dark:text-red-400' : 'dark:text-white'}`}>
+                    } ${
+                      task.important && isLessThanOneDay
+                        ? 'text-red-500 dark:text-red-400'
+                        : isOverdue
+                        ? 'text-red-500 dark:text-red-400'
+                        : 'dark:text-white'
+                    }`}>
                       {task.name}
                     </h2>
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -383,7 +402,7 @@ export default function Component() {
                             color: stringToColor(tag, darkMode),
                             borderColor: stringToColor(tag, darkMode),
                           }}
-                          className="px-3 py-1 text-sm font-semibold transition-colors hover:bg-current hover:bg-opacity-10"
+                          className="hover:bg-current/10 px-3 py-1 text-sm font-semibold transition-colors"
                         >
                           {tag}
                         </Badge>
