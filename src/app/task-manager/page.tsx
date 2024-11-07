@@ -83,6 +83,16 @@ export default function Component() {
     }
   }, [darkMode])
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // Force a re-render of the component
+      setTasks(prevTasks => [...prevTasks])
+    }, 60000) // 60000 ms = 1 minute
+
+    // Cleanup function to clear the interval when the component unmounts
+    return () => clearInterval(intervalId)
+  }, [])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     if (editingTask) {
