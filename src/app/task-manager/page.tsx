@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Edit, Filter, Moon, PlusCircle, Sun, Trash } from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
@@ -12,8 +13,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { PlusCircle, Filter, Edit, Trash, Moon, Sun } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
   SelectContent,
@@ -21,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 interface Task {
   id: number
@@ -71,7 +72,7 @@ export default function Component() {
 
   useEffect(() => {
     localStorage.setItem('tasks', JSON.stringify(tasks))
-    const tags = Array.from(new Set(tasks.flatMap(task => task.tags)))
+    const tags = Array.from(new Set(tasks.flatMap((task) => task.tags)))
     setAllTags(tags)
   }, [tasks])
 
@@ -87,7 +88,7 @@ export default function Component() {
   useEffect(() => {
     const intervalId = setInterval(() => {
       // Force a re-render of the component
-      setTasks(prevTasks => [...prevTasks])
+      setTasks((prevTasks) => [...prevTasks])
     }, 60000) // 60000 ms = 1 minute
 
     // Cleanup function to clear the interval when the component unmounts
@@ -99,7 +100,16 @@ export default function Component() {
     if (editingTask) {
       setEditingTask({ ...editingTask, [name]: value })
     } else {
-      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, important: false, [name]: value })
+      setEditingTask({
+        id: 0,
+        name: '',
+        endDate: '',
+        endTime: '',
+        tags: [],
+        isDone: false,
+        important: false,
+        [name]: value,
+      })
     }
   }
 
@@ -108,14 +118,25 @@ export default function Component() {
     if (editingTask) {
       setEditingTask({ ...editingTask, tags })
     } else {
-      setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags, isDone: false, important: false })
+      setEditingTask({
+        id: 0,
+        name: '',
+        endDate: '',
+        endTime: '',
+        tags,
+        isDone: false,
+        important: false,
+      })
     }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (editingTask) {
-      let taskToSave = { ...editingTask, important: editingTask?.important || false }
+      let taskToSave = {
+        ...editingTask,
+        important: editingTask?.important || false,
+      }
       if (deadlineType === 'remaining') {
         const days = remainingDays === '' ? 0 : parseInt(remainingDays)
         const hours = remainingHours === '' ? 0 : parseInt(remainingHours)
@@ -130,9 +151,9 @@ export default function Component() {
         const now = new Date()
         const deadline = new Date(
           now.getTime() +
-          (days * 24 * 60 * 60 * 1000) +
-          (hours * 60 * 60 * 1000) +
-          (minutes * 60 * 1000)
+            days * 24 * 60 * 60 * 1000 +
+            hours * 60 * 60 * 1000 +
+            minutes * 60 * 1000
         )
         taskToSave.endDate = deadline.toISOString().split('T')[0]
         taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
@@ -143,7 +164,9 @@ export default function Component() {
         setTasks([...tasks, newTask])
       } else {
         // Updating an existing task
-        setTasks(tasks.map(task => task.id === taskToSave.id ? taskToSave : task))
+        setTasks(
+          tasks.map((task) => (task.id === taskToSave.id ? taskToSave : task))
+        )
       }
       setEditingTask(null)
       setIsOpen(false)
@@ -175,7 +198,7 @@ export default function Component() {
   }
 
   const deleteTask = (id: number) => {
-    setTasks(tasks.filter(task => task.id !== id))
+    setTasks(tasks.filter((task) => task.id !== id))
   }
 
   const editTask = (task: Task) => {
@@ -186,7 +209,10 @@ export default function Component() {
 
   const sortTasks = (tasks: Task[]): Task[] => {
     return tasks.sort((a, b) => {
-      return new Date(`${a.endDate}T${a.endTime}`).getTime() - new Date(`${b.endDate}T${b.endTime}`).getTime()
+      return (
+        new Date(`${a.endDate}T${a.endTime}`).getTime() -
+        new Date(`${b.endDate}T${b.endTime}`).getTime()
+      )
     })
   }
 
@@ -195,30 +221,55 @@ export default function Component() {
   )
 
   return (
-    <div className={`min-h-screen w-full ${darkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
+    <div
+      className={`min-h-screen w-full ${darkMode ? 'dark bg-gray-900' : 'bg-white'}`}
+    >
       <div className="container mx-auto p-4">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold dark:text-white">Task Management</h1>
-          <Button variant="outline" size="icon" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? <Sun className="size-[1.2rem]" /> : <Moon className="size-[1.2rem]" />}
+          <h1 className="text-2xl font-bold dark:text-white">
+            Task Management
+          </h1>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setDarkMode(!darkMode)}
+          >
+            {darkMode ? (
+              <Sun className="size-[1.2rem]" />
+            ) : (
+              <Moon className="size-[1.2rem]" />
+            )}
           </Button>
         </div>
 
         <div className="mb-6 flex flex-col gap-4 sm:flex-row">
-          <Dialog open={isOpen} onOpenChange={(open) => {
-            setIsOpen(open)
-            if (!open) {
-              setEditingTask(null)
-              setDeadlineType('date')
-              setRemainingDays('')
-              setRemainingHours('')
-              setRemainingMinutes('')
-            }
-          }}>
+          <Dialog
+            open={isOpen}
+            onOpenChange={(open) => {
+              setIsOpen(open)
+              if (!open) {
+                setEditingTask(null)
+                setDeadlineType('date')
+                setRemainingDays('')
+                setRemainingHours('')
+                setRemainingMinutes('')
+              }
+            }}
+          >
             <DialogTrigger asChild>
               <Button
                 className="w-full sm:w-auto"
-                onClick={() => setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, important: false })}
+                onClick={() =>
+                  setEditingTask({
+                    id: 0,
+                    name: '',
+                    endDate: '',
+                    endTime: '',
+                    tags: [],
+                    isDone: false,
+                    important: false,
+                  })
+                }
               >
                 <PlusCircle className="mr-2 size-4" /> Add New Task
               </Button>
@@ -226,12 +277,16 @@ export default function Component() {
             <DialogContent className="dark:bg-gray-800 dark:text-white">
               <DialogHeader>
                 <DialogTitle className="dark:text-white">
-                  {editingTask && editingTask.id !== 0 ? 'Edit Task' : 'Create New Task'}
+                  {editingTask && editingTask.id !== 0
+                    ? 'Edit Task'
+                    : 'Create New Task'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name" className="dark:text-gray-200">Task Name</Label>
+                  <Label htmlFor="name" className="dark:text-gray-200">
+                    Task Name
+                  </Label>
                   <Input
                     id="name"
                     name="name"
@@ -241,7 +296,12 @@ export default function Component() {
                     className="dark:bg-gray-700 dark:text-white"
                   />
                 </div>
-                <RadioGroup defaultValue="date" onValueChange={(value) => setDeadlineType(value as DeadlineType)}>
+                <RadioGroup
+                  defaultValue="date"
+                  onValueChange={(value) =>
+                    setDeadlineType(value as DeadlineType)
+                  }
+                >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="date" id="date" />
                     <Label htmlFor="date">End Date</Label>
@@ -254,7 +314,9 @@ export default function Component() {
                 {deadlineType === 'date' ? (
                   <>
                     <div>
-                      <Label htmlFor="endDate" className="dark:text-gray-200">End Date</Label>
+                      <Label htmlFor="endDate" className="dark:text-gray-200">
+                        End Date
+                      </Label>
                       <Input
                         id="endDate"
                         name="endDate"
@@ -266,7 +328,9 @@ export default function Component() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="endTime" className="dark:text-gray-200">End Time</Label>
+                      <Label htmlFor="endTime" className="dark:text-gray-200">
+                        End Time
+                      </Label>
                       <Input
                         id="endTime"
                         name="endTime"
@@ -281,7 +345,12 @@ export default function Component() {
                 ) : (
                   <div className="flex space-x-2">
                     <div>
-                      <Label htmlFor="remainingDays" className="dark:text-gray-200">Days</Label>
+                      <Label
+                        htmlFor="remainingDays"
+                        className="dark:text-gray-200"
+                      >
+                        Days
+                      </Label>
                       <Input
                         id="remainingDays"
                         type="number"
@@ -292,7 +361,12 @@ export default function Component() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="remainingHours" className="dark:text-gray-200">Hours</Label>
+                      <Label
+                        htmlFor="remainingHours"
+                        className="dark:text-gray-200"
+                      >
+                        Hours
+                      </Label>
                       <Input
                         id="remainingHours"
                         type="number"
@@ -304,7 +378,12 @@ export default function Component() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="remainingMinutes" className="dark:text-gray-200">Minutes</Label>
+                      <Label
+                        htmlFor="remainingMinutes"
+                        className="dark:text-gray-200"
+                      >
+                        Minutes
+                      </Label>
                       <Input
                         id="remainingMinutes"
                         type="number"
@@ -318,7 +397,9 @@ export default function Component() {
                   </div>
                 )}
                 <div>
-                  <Label htmlFor="tags" className="dark:text-gray-200">Tags (comma-separated)</Label>
+                  <Label htmlFor="tags" className="dark:text-gray-200">
+                    Tags (comma-separated)
+                  </Label>
                   <Input
                     id="tags"
                     name="tags"
@@ -333,13 +414,22 @@ export default function Component() {
                     checked={editingTask?.important || false}
                     onCheckedChange={(checked) => {
                       if (editingTask?.id) {
-                        setEditingTask({...editingTask, ...{important: checked as boolean} })
+                        setEditingTask({
+                          ...editingTask,
+                          ...{ important: checked as boolean },
+                        })
                       }
                     }}
                   />
-                  <Label htmlFor="important" className="dark:text-gray-200">IMPORTANT</Label>
+                  <Label htmlFor="important" className="dark:text-gray-200">
+                    IMPORTANT
+                  </Label>
                 </div>
-                <Button type="submit">{editingTask && editingTask.id !== 0 ? 'Update Task' : 'Create Task'}</Button>
+                <Button type="submit">
+                  {editingTask && editingTask.id !== 0
+                    ? 'Update Task'
+                    : 'Create Task'}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -347,7 +437,11 @@ export default function Component() {
           <div className="flex w-full flex-col gap-4 sm:flex-row">
             <div className="flex w-full items-center sm:w-[250px]">
               <Filter className="mr-2 size-4 shrink-0" />
-              <Select onValueChange={(value) => setFilterTag(value === 'all' ? null : value)}>
+              <Select
+                onValueChange={(value) =>
+                  setFilterTag(value === 'all' ? null : value)
+                }
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Filter by tag" />
                 </SelectTrigger>
@@ -366,7 +460,8 @@ export default function Component() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredAndSortedTasks.map((task) => {
-            const { days, hours, minutes, isLessThanOneDay, isOverdue } = calculateTimeLeft(task.endDate, task.endTime)
+            const { days, hours, minutes, isLessThanOneDay, isOverdue } =
+              calculateTimeLeft(task.endDate, task.endTime)
             return (
               <div
                 key={task.id}
@@ -382,15 +477,17 @@ export default function Component() {
                     className="mt-1"
                   />
                   <div className="min-w-0 flex-1">
-                    <h2 className={`break-words text-lg font-semibold ${
-                      task.isDone ? 'line-through' : ''
-                    } ${
-                      task.important && isLessThanOneDay
-                        ? 'text-red-500 dark:text-red-400'
-                        : isOverdue
-                        ? 'text-red-500 dark:text-red-400'
-                        : 'dark:text-white'
-                    }`}>
+                    <h2
+                      className={`break-words text-lg font-semibold ${
+                        task.isDone ? 'line-through' : ''
+                      } ${
+                        task.important && isLessThanOneDay
+                          ? 'text-red-500 dark:text-red-400'
+                          : isOverdue
+                            ? 'text-red-500 dark:text-red-400'
+                            : 'dark:text-white'
+                      }`}
+                    >
                       {task.name}
                     </h2>
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -412,21 +509,32 @@ export default function Component() {
                 </div>
 
                 <div className="mt-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                  <p className={`text-sm ${
-                    isLessThanOneDay || isOverdue ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground dark:text-gray-300'
-                  }`}>
+                  <p
+                    className={`text-sm ${
+                      isLessThanOneDay || isOverdue
+                        ? 'text-red-500 dark:text-red-400'
+                        : 'text-muted-foreground dark:text-gray-300'
+                    }`}
+                  >
                     {isOverdue
                       ? `Overdue (${task.endDate})`
                       : days > 0
                         ? `${days}d ${hours}h ${minutes}m left`
-                        : `${hours}h ${minutes}m left`
-                    }
+                        : `${hours}h ${minutes}m left`}
                   </p>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => editTask(task)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => editTask(task)}
+                    >
                       <Edit className="size-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteTask(task.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteTask(task.id)}
+                    >
                       <Trash className="size-4" />
                     </Button>
                   </div>

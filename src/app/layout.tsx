@@ -3,6 +3,7 @@ import { JetBrains_Mono } from 'next/font/google'
 
 import './globals.css'
 
+import { ReactNode } from 'react'
 import DynamicTitle from '@/feature/DynamicTitle'
 
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: ReactNode
 }>) {
   return (
     <html lang="en">
