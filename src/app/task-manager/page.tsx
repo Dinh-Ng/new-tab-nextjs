@@ -508,7 +508,7 @@ export default function Component() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                <div className="mt-2 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                   <p
                     className={`text-sm ${
                       isLessThanOneDay || isOverdue
@@ -535,7 +535,7 @@ export default function Component() {
                       size="icon"
                       onClick={() => deleteTask(task.id)}
                     >
-                      <Trash className="size-4" />
+                      <Trash className="size-4" color='#f87171' />
                     </Button>
                   </div>
                 </div>
