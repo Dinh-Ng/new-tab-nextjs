@@ -209,10 +209,19 @@ export default function Component() {
 
   const sortTasks = (tasks: Task[]): Task[] => {
     return tasks.sort((a, b) => {
-      return (
-        new Date(`${a.endDate}T${a.endTime}`).getTime() -
-        new Date(`${b.endDate}T${b.endTime}`).getTime()
-      )
+      const aTimeLeft = calculateTimeLeft(a.endDate, a.endTime)
+      const bTimeLeft = calculateTimeLeft(b.endDate, b.endTime)
+
+      // Move important tasks with less than 1 day remaining to the top
+      if (a.important && aTimeLeft.isLessThanOneDay && (!b.important || !bTimeLeft.isLessThanOneDay)) {
+        return -1
+      }
+      if (b.important && bTimeLeft.isLessThanOneDay && (!a.important || !aTimeLeft.isLessThanOneDay)) {
+        return 1
+      }
+
+      // For other tasks, sort by end date and time
+      return new Date(`${a.endDate}T${a.endTime}`).getTime() - new Date(`${b.endDate}T${b.endTime}`).getTime()
     })
   }
 
