@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -51,6 +53,8 @@ export default function Component() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [allTags, setAllTags] = useState<string[]>([])
   const [darkMode, setDarkMode] = useState(false)
@@ -199,6 +203,8 @@ export default function Component() {
 
   const deleteTask = (id: number) => {
     setTasks(tasks.filter((task) => task.id !== id))
+    setIsDeleteDialogOpen(false)
+    setTaskToDelete(null)
   }
 
   const editTask = (task: Task) => {
@@ -542,7 +548,10 @@ export default function Component() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => deleteTask(task.id)}
+                      onClick={() => {
+                        setTaskToDelete(task.id)
+                        setIsDeleteDialogOpen(true)
+                      }}
                     >
                       <Trash className="size-4" color='#f87171' />
                     </Button>
@@ -552,6 +561,29 @@ export default function Component() {
             )
           })}
         </div>
+
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="dark:bg-gray-800 dark:text-white">
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription className="dark:text-gray-300">
+                Are you sure you want to delete this task? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => taskToDelete && deleteTask(taskToDelete)}
+                className="dark:bg-red-600 dark:hover:bg-red-700"
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
