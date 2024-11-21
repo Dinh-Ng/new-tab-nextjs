@@ -1,4 +1,8 @@
-import { Bookmark, ListTodo } from 'lucide-react'
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Book, ListTodo } from 'lucide-react'
 
 import {
   Sidebar,
@@ -17,16 +21,17 @@ const items = [
     title: 'Task Manager',
     url: '/task-manager',
     icon: ListTodo,
-    isActive: true,
   },
   {
-    title: 'Bookmarks',
-    url: '#',
-    icon: Bookmark,
+    title: 'Story Reader',
+    url: '/story-reader',
+    icon: Book,
   },
 ]
 
 export function AppSidebar() {
+  const pathname = usePathname()
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -36,11 +41,11 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={item.isActive}>
-                    <a href={item.url}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                    <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
