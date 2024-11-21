@@ -3,8 +3,8 @@ import path from 'path'
 import Link from 'next/link'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-import StoryUploadForm from './components/StoryUploadForm'
+import StoryUploadForm from '@/app/story-reader/components/StoryUploadForm'
+import { StoryProps } from '@/app/story-reader/type'
 
 async function getStories() {
   const dataFilePath = path.join(process.cwd(), 'data', 'stories.json')
@@ -31,7 +31,7 @@ export default async function Home() {
           <h2 className="mb-4 text-2xl font-semibold">Recent Stories</h2>
           {stories.length > 0 ? (
             <div className="space-y-4">
-              {stories.map((story) => (
+              {stories.map((story: StoryProps) => (
                 <Card key={story.id}>
                   <CardHeader>
                     <CardTitle>

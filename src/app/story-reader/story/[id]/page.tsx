@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StoryProps } from '@/app/story-reader/type'
 
 async function getStory(id: string) {
   const dataFilePath = path.join(process.cwd(), 'data', 'stories.json')
   try {
     const fileContents = await fs.readFile(dataFilePath, 'utf8')
     const stories = JSON.parse(fileContents)
-    return stories.find((story) => story.id === id)
+    return stories.find((story: StoryProps) => story.id === id)
   } catch (error) {
     return null
   }
@@ -45,7 +46,7 @@ export default async function StoryPage({
             By {story.author} | {new Date(story.createdAt).toLocaleDateString()}
           </p>
           <div className="prose max-w-none">
-            {story.content.split('\n').map((paragraph, index) => (
+            {story.content.split('\n').map((paragraph: string, index: number) => (
               <p key={index} className="mb-4">
                 {paragraph}
               </p>
