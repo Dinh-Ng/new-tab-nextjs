@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Edit, Filter, Moon, PlusCircle, Sun, Trash } from 'lucide-react'
+import { Edit, Filter, Moon, PlusCircle, Sun, Trash, AlertCircle } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -296,6 +296,7 @@ export default function Component() {
                     ? 'Edit Task'
                     : 'Create New Task'}
                 </DialogTitle>
+                <DialogDescription />
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -481,7 +482,7 @@ export default function Component() {
               <div
                 key={task.id}
                 className={`flex flex-col rounded-lg border p-4 ${
-                  task.isDone ? 'bg-muted dark:bg-gray-800' : 'dark:bg-gray-700'
+                  task.isDone ? 'bg-muted dark:bg-gray-800' : task.important ? 'bg-yellow-50 dark:bg-yellow-900' : 'dark:bg-gray-700'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -492,19 +493,27 @@ export default function Component() {
                     className="mt-1"
                   />
                   <div className="min-w-0 flex-1">
-                    <h2
-                      className={`break-words text-lg font-semibold ${
-                        task.isDone ? 'line-through' : ''
-                      } ${
-                        task.important && isLessThanOneDay
-                          ? 'text-red-500 dark:text-red-400'
-                          : isOverdue
+                    <div className="flex items-center gap-2">
+                      <h2
+                        className={`break-words text-lg ${task.important ? 'font-bold' : 'font-semibold'} ${
+                          task.isDone ? 'line-through' : ''
+                        } ${
+                          task.important && isLessThanOneDay
                             ? 'text-red-500 dark:text-red-400'
-                            : 'dark:text-white'
-                      }`}
-                    >
-                      {task.name}
-                    </h2>
+                            : isOverdue
+                              ? 'text-red-500 dark:text-red-400'
+                              : 'dark:text-white'
+                        }`}
+                      >
+                        {task.name}
+                      </h2>
+                      {task.important && (
+                        <Badge variant="destructive" className="text-xs">
+                          <AlertCircle className="mr-1 size-3" />
+                          IMPORTANT
+                        </Badge>
+                      )}
+                    </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {task.tags.map((tag, index) => (
                         <Badge
@@ -526,6 +535,10 @@ export default function Component() {
                 <div className="mt-2 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                   <p
                     className={`text-sm ${
+                      task.important
+                        ? 'font-semibold'
+                        : ''
+                    } ${
                       isLessThanOneDay || isOverdue
                         ? 'text-red-500 dark:text-red-400'
                         : 'text-muted-foreground dark:text-gray-300'
