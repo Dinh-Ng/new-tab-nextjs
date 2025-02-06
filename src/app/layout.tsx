@@ -25,7 +25,7 @@ export default async function RootLayout({
     <html lang="en">
       <DynamicTitle />
       <body className={`${jetbrain_mono.className}`}>
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={false}>
           <AppSidebar />
           <main className="w-full">
             <SidebarTrigger />

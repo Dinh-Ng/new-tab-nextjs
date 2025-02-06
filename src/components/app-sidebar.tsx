@@ -7,6 +7,7 @@ import { Book, ListTodo } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -53,6 +54,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <div>Update at: 06/02/2025 21:59</div>
+      </SidebarFooter>
     </Sidebar>
   )
 }
