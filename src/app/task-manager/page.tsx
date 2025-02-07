@@ -487,15 +487,23 @@ export default function Component() {
             return (
               <div
                 key={task.id}
-                className={`flex flex-col rounded-lg border p-4 ${
+                className={`flex cursor-pointer flex-col rounded-lg border p-4 ${
                   task.isDone ? 'bg-muted dark:bg-gray-800' : task.important ? 'bg-yellow-50 dark:bg-yellow-900' : 'dark:bg-gray-700'
                 }`}
+                onClick={() => {
+                  setEditingTask(task)
+                  setIsOpen(true)
+                  setDeadlineType('date')
+                }}
               >
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id={`task-${task.id}`}
                     checked={task.isDone}
-                    onCheckedChange={() => toggleTaskDone(task.id)}
+                    onCheckedChange={(e) => {
+                      e.stopPropagation()
+                      toggleTaskDone(task.id)
+                    }}
                     className="mt-1"
                   />
                   <div className="min-w-0 flex-1">
@@ -560,14 +568,8 @@ export default function Component() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => editTask(task)}
-                    >
-                      <Edit className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setTaskToDelete(task.id)
                         setIsDeleteDialogOpen(true)
                       }}
