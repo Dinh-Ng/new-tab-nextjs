@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Edit, Filter, Moon, PlusCircle, Sun, Trash, AlertCircle } from 'lucide-react'
+import { AlertCircle, Filter, Moon, PlusCircle, Sun, Trash } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,11 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -225,15 +225,26 @@ export default function Component() {
       const bTimeLeft = calculateTimeLeft(b.endDate, b.endTime)
 
       // Move important tasks with less than 1 day remaining to the top
-      if (a.important && aTimeLeft.isLessThanOneDay && (!b.important || !bTimeLeft.isLessThanOneDay)) {
+      if (
+        a.important &&
+        aTimeLeft.isLessThanOneDay &&
+        (!b.important || !bTimeLeft.isLessThanOneDay)
+      ) {
         return -1
       }
-      if (b.important && bTimeLeft.isLessThanOneDay && (!a.important || !aTimeLeft.isLessThanOneDay)) {
+      if (
+        b.important &&
+        bTimeLeft.isLessThanOneDay &&
+        (!a.important || !aTimeLeft.isLessThanOneDay)
+      ) {
         return 1
       }
 
       // For other tasks, sort by end date and time
-      return new Date(`${a.endDate}T${a.endTime}`).getTime() - new Date(`${b.endDate}T${b.endTime}`).getTime()
+      return (
+        new Date(`${a.endDate}T${a.endTime}`).getTime() -
+        new Date(`${b.endDate}T${b.endTime}`).getTime()
+      )
     })
   }
 
@@ -488,20 +499,21 @@ export default function Component() {
               <div
                 key={task.id}
                 className={`flex cursor-pointer flex-col rounded-lg border p-4 ${
-                  task.isDone ? 'bg-muted dark:bg-gray-800' : task.important ? 'bg-yellow-50 dark:bg-yellow-900' : 'dark:bg-gray-700'
+                  task.isDone
+                    ? 'bg-muted dark:bg-gray-800'
+                    : task.important
+                      ? 'bg-yellow-50 dark:bg-yellow-900'
+                      : 'dark:bg-gray-700'
                 }`}
-                onClick={() => {
-                  setEditingTask(task)
-                  setIsOpen(true)
-                  setDeadlineType('date')
-                }}
+                onClick={() => editTask(task)}
               >
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id={`task-${task.id}`}
                     checked={task.isDone}
-                    onCheckedChange={(e) => {
-                      e.stopPropagation()
+                    onCheckedChange={(checked, event) => {
+                      event?.preventDefault()
+                      event?.stopPropagation()
                       toggleTaskDone(task.id)
                     }}
                     className="mt-1"
@@ -549,9 +561,7 @@ export default function Component() {
                 <div className="mt-2 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                   <p
                     className={`text-sm ${
-                      task.important
-                        ? 'font-semibold'
-                        : ''
+                      task.important ? 'font-semibold' : ''
                     } ${
                       isLessThanOneDay || isOverdue
                         ? 'text-red-500 dark:text-red-400'
@@ -574,7 +584,7 @@ export default function Component() {
                         setIsDeleteDialogOpen(true)
                       }}
                     >
-                      <Trash className="size-4" color='#f87171' />
+                      <Trash className="size-4" color="#f87171" />
                     </Button>
                   </div>
                 </div>
@@ -588,11 +598,15 @@ export default function Component() {
             <DialogHeader>
               <DialogTitle>Confirm Deletion</DialogTitle>
               <DialogDescription className="dark:text-gray-300">
-                Are you sure you want to delete this task? This action cannot be undone.
+                Are you sure you want to delete this task? This action cannot be
+                undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
