@@ -160,7 +160,7 @@ export default function Component() {
             minutes * 60 * 1000
         )
 
-        taskToSave.endDate = deadline.toISOString().split('T')[0]
+        taskToSave.endDate = deadline.toLocaleDateString('en-CA')
         taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
       }
       if (taskToSave.id === 0) {
