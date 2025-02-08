@@ -159,6 +159,7 @@ export default function Component() {
             hours * 60 * 60 * 1000 +
             minutes * 60 * 1000
         )
+
         taskToSave.endDate = deadline.toISOString().split('T')[0]
         taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
       }
@@ -184,11 +185,6 @@ export default function Component() {
   const calculateTimeLeft = (endDate: string, endTime: string) => {
     const now = new Date()
     const deadline = new Date(`${endDate}T${endTime}`)
-
-    // If the deadline is earlier in the day than the current time, assume it's for the next day
-    if (deadline < now && deadline.getDate() === now.getDate()) {
-      deadline.setDate(deadline.getDate() + 1)
-    }
 
     const diff = deadline.getTime() - now.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
