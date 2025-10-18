@@ -160,7 +160,7 @@ export default function Component() {
             minutes * 60 * 1000
         )
 
-        taskToSave.endDate = deadline.toLocaleDateString('en-CA')
+        taskToSave.endDate = deadline.toISOString().split('T')[0]
         taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
       }
       if (taskToSave.id === 0) {
@@ -185,6 +185,11 @@ export default function Component() {
   const calculateTimeLeft = (endDate: string, endTime: string) => {
     const now = new Date()
     const deadline = new Date(`${endDate}T${endTime}`)
+
+    // If the deadline is earlier in the day than the current time, assume it's for the next day
+    if (deadline < now && deadline.getDate() === now.getDate()) {
+      deadline.setDate(deadline.getDate() + 1)
+    }
 
     const diff = deadline.getTime() - now.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
@@ -507,7 +512,9 @@ export default function Component() {
                   <Checkbox
                     id={`task-${task.id}`}
                     checked={task.isDone}
-                    onCheckedChange={() => {
+                    onCheckedChange={(checked, event) => {
+                      event?.preventDefault()
+                      event?.stopPropagation()
                       toggleTaskDone(task.id)
                     }}
                     className="mt-1"
@@ -553,21 +560,28 @@ export default function Component() {
                 </div>
 
                 <div className="mt-2 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                  <p
-                    className={`text-sm ${
-                      task.important ? 'font-semibold' : ''
-                    } ${
-                      isLessThanOneDay || isOverdue
-                        ? 'text-red-500 dark:text-red-400'
-                        : 'text-muted-foreground dark:text-gray-300'
-                    }`}
-                  >
-                    {isOverdue
-                      ? `Overdue (${task.endDate})`
-                      : days > 0
-                        ? `${days}d ${hours}h ${minutes}m left`
-                        : `${hours}h ${minutes}m left`}
-                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p
+                      className={`text-sm ${
+                        task.important ? 'font-semibold' : ''
+                      } ${
+                        isLessThanOneDay || isOverdue
+                          ? 'text-red-500 dark:text-red-400'
+                          : 'text-muted-foreground dark:text-gray-300'
+                      }`}
+                    >
+                      {isOverdue ? (
+                        <span className="font-bold">Overdue</span>
+                      ) : days > 0 ? (
+                        `${days}d ${hours}h ${minutes}m left`
+                      ) : (
+                        `${hours}h ${minutes}m left`
+                      )}
+                    </p>
+                    <p className="text-muted-foreground text-xs dark:text-gray-400">
+                      End: {task.endDate} at {task.endTime}
+                    </p>
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
