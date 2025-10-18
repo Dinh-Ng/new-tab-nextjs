@@ -153,12 +153,7 @@ export default function Component() {
         }
 
         const now = new Date()
-        const deadline = new Date(
-          now.getTime() +
-            days * 24 * 60 * 60 * 1000 +
-            hours * 60 * 60 * 1000 +
-            minutes * 60 * 1000
-        )
+        const deadline = new Date(now.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000 + minutes * 60 * 1000)
 
         taskToSave.endDate = deadline.toISOString().split('T')[0]
         taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
@@ -186,16 +181,11 @@ export default function Component() {
     const now = new Date()
     const deadline = new Date(`${endDate}T${endTime}`)
 
-    // If the deadline is earlier in the day than the current time, assume it's for the next day
-    if (deadline < now && deadline.getDate() === now.getDate()) {
-      deadline.setDate(deadline.getDate() + 1)
-    }
-
     const diff = deadline.getTime() - now.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const isLessThanOneDay = diff < 24 * 60 * 60 * 1000
+    const isLessThanOneDay = diff < 24 * 60 * 60 * 1000 && diff > 0
     const isOverdue = diff < 0
     return { days, hours, minutes, isLessThanOneDay, isOverdue }
   }
@@ -512,7 +502,9 @@ export default function Component() {
                   <Checkbox
                     id={`task-${task.id}`}
                     checked={task.isDone}
-                    onCheckedChange={() => {
+                    onCheckedChange={(checked, event) => {
+                      event?.preventDefault()
+                      event?.stopPropagation()
                       toggleTaskDone(task.id)
                     }}
                     className="mt-1"
@@ -568,13 +560,11 @@ export default function Component() {
                           : 'text-muted-foreground dark:text-gray-300'
                       }`}
                     >
-                      {isOverdue ? (
-                        <span className="font-bold">Overdue</span>
-                      ) : days > 0 ? (
-                        `${days}d ${hours}h ${minutes}m left`
-                      ) : (
-                        `${hours}h ${minutes}m left`
-                      )}
+                      {isOverdue
+                        ? <span className="font-bold">Overdue</span>
+                        : days > 0
+                          ? `${days}d ${hours}h ${minutes}m left`
+                          : `${hours}h ${minutes}m left`}
                     </p>
                     <p className="text-muted-foreground text-xs dark:text-gray-400">
                       End: {task.endDate} at {task.endTime}
