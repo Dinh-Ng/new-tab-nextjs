@@ -512,9 +512,7 @@ export default function Component() {
                   <Checkbox
                     id={`task-${task.id}`}
                     checked={task.isDone}
-                    onCheckedChange={(checked, event) => {
-                      event?.preventDefault()
-                      event?.stopPropagation()
+                    onCheckedChange={() => {
                       toggleTaskDone(task.id)
                     }}
                     className="mt-1"
