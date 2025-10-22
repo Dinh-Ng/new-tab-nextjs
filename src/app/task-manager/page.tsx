@@ -208,6 +208,9 @@ export default function Component() {
     setEditingTask(task)
     setIsOpen(true)
     setDeadlineType('date')
+    setRemainingDays('')
+    setRemainingHours('')
+    setRemainingMinutes('')
   }
 
   const sortTasks = (tasks: Task[]): Task[] => {
@@ -282,7 +285,7 @@ export default function Component() {
             <DialogTrigger asChild>
               <Button
                 className="w-full sm:w-auto"
-                onClick={() =>
+                onClick={() => {
                   setEditingTask({
                     id: 0,
                     name: '',
@@ -292,7 +295,10 @@ export default function Component() {
                     isDone: false,
                     important: false,
                   })
-                }
+                  setRemainingDays('')
+                  setRemainingHours('')
+                  setRemainingMinutes('')
+                }}
               >
                 <PlusCircle className="mr-2 size-4" /> Add New Task
               </Button>
