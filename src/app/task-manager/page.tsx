@@ -155,8 +155,16 @@ export default function Component() {
         const now = new Date()
         const deadline = new Date(now.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000 + minutes * 60 * 1000)
 
-        taskToSave.endDate = deadline.toISOString().split('T')[0]
-        taskToSave.endTime = deadline.toTimeString().split(' ')[0].slice(0, 5)
+        // Format date as YYYY-MM-DD using local timezone
+        const year = deadline.getFullYear()
+        const month = String(deadline.getMonth() + 1).padStart(2, '0')
+        const day = String(deadline.getDate()).padStart(2, '0')
+        taskToSave.endDate = `${year}-${month}-${day}`
+
+        // Format time as HH:MM using local timezone
+        const endHours = String(deadline.getHours()).padStart(2, '0')
+        const endMinutes = String(deadline.getMinutes()).padStart(2, '0')
+        taskToSave.endTime = `${endHours}:${endMinutes}`
       }
       if (taskToSave.id === 0) {
         // Creating a new task
