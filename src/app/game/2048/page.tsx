@@ -160,8 +160,43 @@ export default function Game2048() {
       }
       e.preventDefault()
     }
+
+    let touchStartX = 0
+    let touchStartY = 0
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+    }
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!touchStartX || !touchStartY) return
+      const touchEndX = e.changedTouches[0].clientX
+      const touchEndY = e.changedTouches[0].clientY
+      const diffX = touchEndX - touchStartX
+      const diffY = touchEndY - touchStartY
+
+      if (Math.abs(diffX) < 30 && Math.abs(diffY) < 30) return // Ignore taps
+
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0) move('RIGHT')
+        else move('LEFT')
+      } else {
+        if (diffY > 0) move('DOWN')
+        else move('UP')
+      }
+      // Reset
+      touchStartX = 0
+      touchStartY = 0
+      e.preventDefault()
+    }
+
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('touchstart', handleTouchStart, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
   }, [move])
 
   const getCellColor = (value: number) => {
