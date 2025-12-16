@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Book, ListTodo } from 'lucide-react'
+import { Book, ListTodo, Gamepad2 } from 'lucide-react'
 
 import {
   Sidebar,
@@ -27,6 +27,11 @@ const items = [
     title: 'Story Reader',
     url: '/story-reader',
     icon: Book,
+  },
+  {
+    title: 'Game Center',
+    url: '/game',
+    icon: Gamepad2,
   },
 ]
 

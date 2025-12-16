@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, CheckSquare, ArrowRight } from 'lucide-react'
+import { BookOpen, CheckSquare, ArrowRight, Gamepad2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -25,6 +25,13 @@ export default function Home() {
       icon: CheckSquare,
       href: '/task-manager',
       color: 'text-emerald-500',
+    },
+    {
+      title: 'Game Center',
+      description: 'Play games and relax.',
+      icon: Gamepad2,
+      href: '/game',
+      color: 'text-rose-500',
     },
   ]
 
