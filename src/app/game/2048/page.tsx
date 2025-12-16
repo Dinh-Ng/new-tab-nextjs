@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { ArrowLeft, RotateCcw } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Undo2 } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,8 @@ export default function Game2048() {
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
+  const [history, setHistory] = useState<{ grid: Grid; score: number }[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Initialize helper to add a random tile (2 or 4) to a random empty spot
   const addNewTile = useCallback((currentGrid: Grid): Grid => {
@@ -42,22 +44,61 @@ export default function Game2048() {
     setGrid(newGrid)
     setScore(0)
     setGameOver(false)
+    setHistory([])
+    localStorage.removeItem('2048-state')
   }, [addNewTile])
 
-  // Load High Score on mount
+  // Load Game State on window mount (client-side only)
   useEffect(() => {
-    const saved = localStorage.getItem('2048-highscore')
-    if (saved) setHighScore(parseInt(saved))
-    initializeGame()
+    const savedHighScore = localStorage.getItem('2048-highscore')
+    if (savedHighScore) setHighScore(parseInt(savedHighScore))
+
+    const savedState = localStorage.getItem('2048-state')
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState)
+        setGrid(parsed.grid)
+        setScore(parsed.score)
+        setHistory(parsed.history || [])
+        setIsInitialized(true)
+      } catch (e) {
+        initializeGame()
+        setIsInitialized(true)
+      }
+    } else {
+      initializeGame()
+      setIsInitialized(true)
+    }
   }, [initializeGame])
 
-  // Save High Score
+  // Save Game State
   useEffect(() => {
+    if (!isInitialized) return
+
+    if (gameOver) {
+      localStorage.removeItem('2048-state')
+    } else {
+      const state = { grid, score, history }
+      localStorage.setItem('2048-state', JSON.stringify(state))
+    }
+
     if (score > highScore) {
       setHighScore(score)
       localStorage.setItem('2048-highscore', score.toString())
     }
-  }, [score, highScore])
+  }, [grid, score, history, highScore, gameOver, isInitialized])
+
+  // Undo Function
+  const undo = () => {
+    if (history.length === 0 || gameOver) return
+
+    const previousState = history[history.length - 1]
+    const newHistory = history.slice(0, -1)
+
+    setGrid(previousState.grid)
+    setScore(previousState.score)
+    setHistory(newHistory)
+  }
 
   // Game Logic: Move & Merge
   const move = useCallback((direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => {
@@ -114,15 +155,18 @@ export default function Game2048() {
       }
 
       if (moved) {
+        // Save history before updating state
+        setHistory((prev) => {
+            const newHist = [...prev, { grid: currentGrid, score }]
+            return newHist.slice(-5) // Keep last 5 moves
+        })
+
         setScore(newScore)
         const finalGrid = addNewTile(newGrid)
 
         // Check Game Over
         const isFull = finalGrid.every(row => row.every(cell => cell !== 0))
         if (isFull) {
-             // Simple check: play can continue if merges are possible.
-             // Ideally we check for potential merges here, but "Full" is a good proxy for now or next move fails.
-             // Let's do a quick merge check for improved UX
              let canMove = false
              for(let r=0; r<GRID_SIZE; r++) {
                 for (let c=0; c<GRID_SIZE; c++) {
@@ -217,6 +261,8 @@ export default function Game2048() {
     return colors[value] || 'bg-black text-white'
   }
 
+  if (!isInitialized) return null // Prevent hydration mismatch
+
   return (
     <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center p-4">
       <div className="flex w-full max-w-md items-center justify-between pb-8">
@@ -229,9 +275,20 @@ export default function Game2048() {
             <h1 className="text-4xl font-bold">2048</h1>
             <div className="text-sm text-muted-foreground">Join the numbers!</div>
         </div>
-        <Button variant="outline" size="icon" onClick={initializeGame}>
-            <RotateCcw className="h-5 w-5" />
-        </Button>
+        <div className="flex gap-2">
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={undo}
+                disabled={history.length === 0 || gameOver}
+                aria-label="Undo"
+            >
+                <Undo2 className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={initializeGame} aria-label="New Game">
+                <RotateCcw className="h-5 w-5" />
+            </Button>
+        </div>
       </div>
 
       <div className="mb-6 flex w-full max-w-md justify-between rounded-xl bg-muted/50 p-4">
@@ -270,7 +327,7 @@ export default function Game2048() {
       </div>
 
       <p className="mt-8 text-sm text-muted-foreground">
-        Use <span className="font-bold">Arrow Keys</span> to move tiles.
+        Use <span className="font-bold">Arrow Keys</span> or <span className="font-bold">Swipe</span> to move tiles.
       </p>
     </div>
   )
