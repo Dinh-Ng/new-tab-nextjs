@@ -257,6 +257,7 @@ export default function Game2048() {
       512: 'bg-yellow-600 text-white dark:bg-yellow-400',
       1024: 'bg-yellow-700 text-white dark:bg-yellow-300',
       2048: 'bg-yellow-800 text-white dark:bg-yellow-200',
+      4096: 'bg-yellow-900 text-white dark:bg-yellow-100',
     }
     return colors[value] || 'bg-black text-white'
   }

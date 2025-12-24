@@ -3,7 +3,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function DynamicTitle() {
-  const [title, setTitle] = useState('xxx')
+  const [title, setTitle] = useState('New Tab')
   const pathname = usePathname()
 
   useEffect(() => {
