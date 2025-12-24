@@ -1,4 +1,4 @@
-import { ArrowRight, Gamepad2, Grid3X3 } from 'lucide-react'
+import { ArrowRight, Gamepad2, Grid3X3, Puzzle } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,13 @@ export default function GamePage() {
       icon: Grid3X3,
       href: '/game/2048',
       color: 'text-yellow-500',
+    },
+    {
+      title: 'Block Puzzle',
+      description: 'Fit the blocks, clear lines, relax.',
+      icon: Puzzle,
+      href: '/game/block-puzzle',
+      color: 'text-amber-700',
     },
   ]
 
