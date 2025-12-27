@@ -86,15 +86,54 @@ export default function BlockPuzzleGame() {
   const [highScore, setHighScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [selectedBlockIdx, setSelectedBlockIdx] = useState<number | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // Initialization
+  // Initialization & Persistence
   useEffect(() => {
     // Load high score
-    const saved = localStorage.getItem('block-puzzle-highscore')
-    if (saved) setHighScore(parseInt(saved))
+    const savedHighScore = localStorage.getItem('block-puzzle-highscore')
+    if (savedHighScore) setHighScore(parseInt(savedHighScore))
 
+    // Load game state
+    const savedState = localStorage.getItem('block-puzzle-state')
+    if (savedState) {
+        try {
+            const parsed = JSON.parse(savedState)
+            // Validate essential data exists
+            if (parsed.grid && parsed.queue) {
+                setGrid(parsed.grid)
+                setQueue(parsed.queue)
+                setScore(parsed.score || 0)
+                setGameOver(parsed.gameOver || false)
+                setIsInitialized(true)
+                return
+            }
+        } catch (e) {
+            console.error("Failed to load saved state", e)
+        }
+    }
+
+    // Fallback to new game if no save or error
     startNewGame()
-  }, [])
+    setIsInitialized(true)
+  }, []) // Run once on mount
+
+  // Save State Effect
+  useEffect(() => {
+    if (!isInitialized) return
+
+    if (gameOver) {
+        localStorage.removeItem('block-puzzle-state')
+    } else {
+        const state = {
+            grid,
+            queue,
+            score,
+            gameOver
+        }
+        localStorage.setItem('block-puzzle-state', JSON.stringify(state))
+    }
+  }, [grid, queue, score, gameOver, isInitialized])
 
   useEffect(() => {
     if (score > highScore) {
@@ -109,6 +148,7 @@ export default function BlockPuzzleGame() {
     setGameOver(false)
     setSelectedBlockIdx(null)
     fillQueue()
+    localStorage.removeItem('block-puzzle-state')
   }
 
   const fillQueue = useCallback(() => {
@@ -265,6 +305,7 @@ export default function BlockPuzzleGame() {
   }
 
   const swapBlocks = () => {
+      if (gameOver) return
       // Cost to swap? Free for now, maybe add cooldown or score cost later
       if (score >= 100) { // Example cost
          setScore(s => s - 100)
@@ -277,6 +318,8 @@ export default function BlockPuzzleGame() {
 
   // Ghost block preview
   const [hoverPos, setHoverPos] = useState<{r: number, c: number} | null>(null)
+
+  if (!isInitialized) return null
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center p-4 bg-stone-100 dark:bg-stone-950">
@@ -399,6 +442,7 @@ export default function BlockPuzzleGame() {
                     ${block === null ? 'invisible' : ''}
                 `}
                 onClick={(e) => {
+                    if (gameOver) return
                     if (selectedBlockIdx === idx) {
                         rotateBlockInQueue(idx, e)
                     } else {
