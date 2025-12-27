@@ -7,17 +7,18 @@ export default function DynamicTitle() {
   const pathname = usePathname()
 
   useEffect(() => {
-    switch (pathname) {
-      case 'default title':
-        setTitle('default title')
-        break
+    if (pathname.startsWith('/game')) {
+      setTitle('Game')
+      return
+    }
 
+    switch (pathname) {
       case '/task-manager':
         setTitle('Task manager')
         break
 
       default:
-        setTitle('default title')
+        setTitle('New Tab')
         break
     }
   }, [pathname])
