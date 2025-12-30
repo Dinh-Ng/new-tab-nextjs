@@ -1,5 +1,5 @@
-import { ArrowRight, Gamepad2, Grid3X3, Puzzle } from 'lucide-react'
 import Link from 'next/link'
+import { ArrowRight, Gamepad2, Grid3X3, Puzzle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -39,9 +39,7 @@ export default function GamePage() {
             <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
               Game Center
             </h1>
-            <p className="text-muted-foreground">
-              Relax and have some fun.
-            </p>
+            <p className="text-muted-foreground">Relax and have some fun.</p>
           </div>
         </div>
 

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { ArrowLeft, RotateCcw, Undo2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { ArrowLeft, RotateCcw, Undo2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 
@@ -10,7 +10,8 @@ type Grid = number[][]
 
 const GRID_SIZE = 4
 
-const getEmptyGrid = (): Grid => Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0))
+const getEmptyGrid = (): Grid =>
+  Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0))
 
 export default function Game2048() {
   const [grid, setGrid] = useState<Grid>(getEmptyGrid())
@@ -101,87 +102,99 @@ export default function Game2048() {
   }
 
   // Game Logic: Move & Merge
-  const move = useCallback((direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => {
-    if (gameOver) return
+  const move = useCallback(
+    (direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => {
+      if (gameOver) return
 
-    setGrid((currentGrid) => {
-      let moved = false
-      let newScore = score
-      const newGrid = currentGrid.map((row) => [...row])
+      setGrid((currentGrid) => {
+        let moved = false
+        let newScore = score
+        const newGrid = currentGrid.map((row) => [...row])
 
-      const slide = (row: number[]) => {
-        const arr = row.filter((val) => val)
-        const missing = GRID_SIZE - arr.length
-        const zeros = Array(missing).fill(0)
-        return arr.concat(zeros)
-      }
+        const slide = (row: number[]) => {
+          const arr = row.filter((val) => val)
+          const missing = GRID_SIZE - arr.length
+          const zeros = Array(missing).fill(0)
+          return arr.concat(zeros)
+        }
 
-      const combine = (row: number[]) => {
-        for (let i = 0; i < GRID_SIZE - 1; i++) {
-          if (row[i] !== 0 && row[i] === row[i + 1]) {
-            row[i] *= 2
-            row[i + 1] = 0
-            newScore += row[i]
-            moved = true
+        const combine = (row: number[]) => {
+          for (let i = 0; i < GRID_SIZE - 1; i++) {
+            if (row[i] !== 0 && row[i] === row[i + 1]) {
+              row[i] *= 2
+              row[i + 1] = 0
+              newScore += row[i]
+              moved = true
+            }
+          }
+          return row
+        }
+
+        const operate = (row: number[]) => {
+          const initial = [...row]
+          let arr = slide(row)
+          arr = combine(arr)
+          arr = slide(arr)
+          if (JSON.stringify(initial) !== JSON.stringify(arr)) moved = true
+          return arr
+        }
+
+        if (direction === 'LEFT' || direction === 'RIGHT') {
+          for (let i = 0; i < GRID_SIZE; i++) {
+            if (direction === 'RIGHT') newGrid[i].reverse()
+            newGrid[i] = operate(newGrid[i])
+            if (direction === 'RIGHT') newGrid[i].reverse()
+          }
+        } else {
+          // Transpose for Up/Down
+          for (let j = 0; j < GRID_SIZE; j++) {
+            let column = [
+              newGrid[0][j],
+              newGrid[1][j],
+              newGrid[2][j],
+              newGrid[3][j],
+            ]
+            if (direction === 'DOWN') column.reverse()
+            column = operate(column)
+            if (direction === 'DOWN') column.reverse()
+            for (let i = 0; i < GRID_SIZE; i++) newGrid[i][j] = column[i]
           }
         }
-        return row
-      }
 
-      const operate = (row: number[]) => {
-        const initial = [...row]
-        let arr = slide(row)
-        arr = combine(arr)
-        arr = slide(arr)
-        if (JSON.stringify(initial) !== JSON.stringify(arr)) moved = true
-        return arr
-      }
-
-      if (direction === 'LEFT' || direction === 'RIGHT') {
-        for (let i = 0; i < GRID_SIZE; i++) {
-          if (direction === 'RIGHT') newGrid[i].reverse()
-          newGrid[i] = operate(newGrid[i])
-          if (direction === 'RIGHT') newGrid[i].reverse()
-        }
-      } else {
-        // Transpose for Up/Down
-        for (let j = 0; j < GRID_SIZE; j++) {
-          let column = [newGrid[0][j], newGrid[1][j], newGrid[2][j], newGrid[3][j]]
-          if (direction === 'DOWN') column.reverse()
-          column = operate(column)
-          if (direction === 'DOWN') column.reverse()
-          for (let i = 0; i < GRID_SIZE; i++) newGrid[i][j] = column[i]
-        }
-      }
-
-      if (moved) {
-        // Save history before updating state
-        setHistory((prev) => {
+        if (moved) {
+          // Save history before updating state
+          setHistory((prev) => {
             const newHist = [...prev, { grid: currentGrid, score }]
             return newHist.slice(-5) // Keep last 5 moves
-        })
+          })
 
-        setScore(newScore)
-        const finalGrid = addNewTile(newGrid)
+          setScore(newScore)
+          const finalGrid = addNewTile(newGrid)
 
-        // Check Game Over
-        const isFull = finalGrid.every(row => row.every(cell => cell !== 0))
-        if (isFull) {
-             let canMove = false
-             for(let r=0; r<GRID_SIZE; r++) {
-                for (let c=0; c<GRID_SIZE; c++) {
-                    const val = finalGrid[r][c]
-                    if (c < GRID_SIZE - 1 && finalGrid[r][c+1] === val) canMove = true
-                    if (r < GRID_SIZE - 1 && finalGrid[r+1][c] === val) canMove = true
-                }
-             }
-             if (!canMove) setGameOver(true)
+          // Check Game Over
+          const isFull = finalGrid.every((row) =>
+            row.every((cell) => cell !== 0)
+          )
+          if (isFull) {
+            let canMove = false
+            for (let r = 0; r < GRID_SIZE; r++) {
+              for (let c = 0; c < GRID_SIZE; c++) {
+                const val = finalGrid[r][c]
+                if (c < GRID_SIZE - 1 && finalGrid[r][c + 1] === val)
+                  canMove = true
+                if (r < GRID_SIZE - 1 && finalGrid[r + 1][c] === val)
+                  canMove = true
+              }
+            }
+            if (!canMove) setGameOver(true)
+          }
+          return finalGrid
         }
-        return finalGrid
-      }
-      return currentGrid
-    })
-  }, [addNewTile, gameOver, score])
+        return currentGrid
+      })
+    },
+    [addNewTile, gameOver, score]
+  )
 
   // Keyboard Controls
   useEffect(() => {
@@ -273,43 +286,52 @@ export default function Game2048() {
           </Link>
         </Button>
         <div className="text-center">
-            <h1 className="text-4xl font-bold">2048</h1>
-            <div className="text-sm text-muted-foreground">Join the numbers!</div>
+          <h1 className="text-4xl font-bold">2048</h1>
+          <div className="text-sm text-muted-foreground">Join the numbers!</div>
         </div>
         <div className="flex gap-2">
-            <Button
-                variant="outline"
-                size="icon"
-                onClick={undo}
-                disabled={history.length === 0 || gameOver}
-                aria-label="Undo"
-            >
-                <Undo2 className="h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={initializeGame} aria-label="New Game">
-                <RotateCcw className="h-5 w-5" />
-            </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={undo}
+            disabled={history.length === 0 || gameOver}
+            aria-label="Undo"
+          >
+            <Undo2 className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={initializeGame}
+            aria-label="New Game"
+          >
+            <RotateCcw className="h-5 w-5" />
+          </Button>
         </div>
       </div>
 
       <div className="mb-6 flex w-full max-w-md justify-between rounded-xl bg-muted/50 p-4">
         <div className="flex flex-col items-center">
-            <span className="text-xs font-bold uppercase text-muted-foreground">Score</span>
-            <span className="text-xl font-bold">{score}</span>
+          <span className="text-xs font-bold uppercase text-muted-foreground">
+            Score
+          </span>
+          <span className="text-xl font-bold">{score}</span>
         </div>
         <div className="flex flex-col items-center">
-            <span className="text-xs font-bold uppercase text-muted-foreground">Best</span>
-            <span className="text-xl font-bold">{highScore}</span>
+          <span className="text-xs font-bold uppercase text-muted-foreground">
+            Best
+          </span>
+          <span className="text-xl font-bold">{highScore}</span>
         </div>
       </div>
 
       <div className="relative rounded-xl bg-card p-4 shadow-xl ring-1 ring-border">
-         {gameOver && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-xl bg-background/80 backdrop-blur-sm">
-                <h2 className="text-3xl font-bold">Game Over!</h2>
-                <Button onClick={initializeGame}>Try Again</Button>
-            </div>
-         )}
+        {gameOver && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-xl bg-background/80 backdrop-blur-sm">
+            <h2 className="text-3xl font-bold">Game Over!</h2>
+            <Button onClick={initializeGame}>Try Again</Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-4 gap-3">
           {grid.map((row, r) =>
@@ -328,7 +350,8 @@ export default function Game2048() {
       </div>
 
       <p className="mt-8 text-sm text-muted-foreground">
-        Use <span className="font-bold">Arrow Keys</span> or <span className="font-bold">Swipe</span> to move tiles.
+        Use <span className="font-bold">Arrow Keys</span> or{' '}
+        <span className="font-bold">Swipe</span> to move tiles.
       </p>
     </div>
   )
