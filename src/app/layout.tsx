@@ -8,6 +8,7 @@ import DynamicTitle from '@/feature/DynamicTitle'
 
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
+import { ThemeProvider } from '@/components/theme-provider'
 
 const jetbrain_mono = JetBrains_Mono({ subsets: ['latin'] })
 
@@ -25,13 +26,20 @@ export default async function RootLayout({
     <html lang="en">
       <DynamicTitle />
       <body className={`${jetbrain_mono.className}`}>
-        <SidebarProvider defaultOpen={false}>
-          <AppSidebar />
-          <main className="w-full">
-            <SidebarTrigger />
-            {children}
-          </main>
-        </SidebarProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SidebarProvider defaultOpen={false}>
+            <AppSidebar />
+            <main className="w-full">
+              <SidebarTrigger />
+              {children}
+            </main>
+          </SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
