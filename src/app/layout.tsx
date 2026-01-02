@@ -23,7 +23,7 @@ export default async function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <DynamicTitle />
       <body className={`${jetbrain_mono.className}`}>
         <ThemeProvider
