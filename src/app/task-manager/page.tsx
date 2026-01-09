@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { AlertCircle, Filter, Moon, PlusCircle, Sun, Trash } from 'lucide-react'
+import { AlertCircle, Filter, PlusCircle, Trash } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -57,7 +58,8 @@ export default function Component() {
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null)
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [allTags, setAllTags] = useState<string[]>([])
-  const [darkMode, setDarkMode] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const [deadlineType, setDeadlineType] = useState<DeadlineType>('date')
   const [remainingDays, setRemainingDays] = useState('')
   const [remainingHours, setRemainingHours] = useState('')
@@ -68,10 +70,6 @@ export default function Component() {
     if (storedTasks) {
       setTasks(JSON.parse(storedTasks))
     }
-    const storedDarkMode = localStorage.getItem('darkMode')
-    if (storedDarkMode) {
-      setDarkMode(JSON.parse(storedDarkMode))
-    }
   }, [])
 
   useEffect(() => {
@@ -80,14 +78,6 @@ export default function Component() {
     setAllTags(tags)
   }, [tasks])
 
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(darkMode))
-    if (darkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [darkMode])
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -256,24 +246,13 @@ export default function Component() {
 
   return (
     <div
-      className={`min-h-screen w-full ${darkMode ? 'dark bg-gray-900' : 'bg-white'}`}
+      className="min-h-screen w-full bg-white dark:bg-gray-900"
     >
       <div className="container mx-auto p-4">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold dark:text-white">
             Task Management
           </h1>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setDarkMode(!darkMode)}
-          >
-            {darkMode ? (
-              <Sun className="size-[1.2rem]" />
-            ) : (
-              <Moon className="size-[1.2rem]" />
-            )}
-          </Button>
         </div>
 
         <div className="mb-6 flex flex-col gap-4 sm:flex-row">
@@ -549,8 +528,8 @@ export default function Component() {
                           key={index}
                           variant="outline"
                           style={{
-                            color: stringToColor(tag, darkMode),
-                            borderColor: stringToColor(tag, darkMode),
+                            color: stringToColor(tag, isDark),
+                            borderColor: stringToColor(tag, isDark),
                           }}
                           className="hover:bg-current/10 px-3 py-1 text-sm font-semibold transition-colors"
                         >
