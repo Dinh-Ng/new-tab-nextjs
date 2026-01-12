@@ -185,7 +185,7 @@ export default function Component() {
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     const isLessThanOneDay = diff < 24 * 60 * 60 * 1000 && diff > 0
     const isOverdue = diff < 0
-    return { days, hours, minutes, isLessThanOneDay, isOverdue }
+    return { days, hours, minutes, isLessThanOneDay, isOverdue, diffInMs: diff }
   }
 
   const toggleTaskDone = (id: number) => {
@@ -243,6 +243,22 @@ export default function Component() {
   const filteredAndSortedTasks = sortTasks(
     filterTag ? tasks.filter((task) => task.tags.includes(filterTag)) : tasks
   )
+
+  const getUrgencyColor = (diff: number, isDark: boolean) => {
+    const oneDay = 24 * 60 * 60 * 1000
+    const ratio = Math.max(0, Math.min(1, diff / oneDay)) // 0 (urgent) to 1 (not urgent)
+
+    if (isDark) {
+      // Dark Mode: From Yellow-900 (hsl(40, 80%, 20%)) to Red-900 (hsl(0, 80%, 20%))
+      const hue = ratio * 40 // 0 to 40
+      return `hsl(${hue}, 90%, 20%)`
+    } else {
+      // Light Mode: From Yellow-50 (hsl(50, 90%, 95%)) to Red-200 (hsl(0, 90%, 85%))
+      const hue = ratio * 50 // 0 to 50
+      const lightness = 85 + ratio * 10 // 85 (at 0) to 95 (at 1)
+      return `hsl(${hue}, 90%, ${lightness}%)`
+    }
+  }
 
   return (
     <div
@@ -477,8 +493,13 @@ export default function Component() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredAndSortedTasks.map((task) => {
-            const { days, hours, minutes, isLessThanOneDay, isOverdue } =
+            const { days, hours, minutes, isLessThanOneDay, isOverdue, diffInMs } =
               calculateTimeLeft(task.endDate, task.endTime)
+            const dynamicBg =
+              task.important && isLessThanOneDay && !task.isDone
+                ? getUrgencyColor(diffInMs, isDark)
+                : undefined
+
             return (
               <div
                 key={task.id}
@@ -486,9 +507,16 @@ export default function Component() {
                   task.isDone
                     ? 'bg-muted dark:bg-gray-800'
                     : task.important
-                      ? 'bg-yellow-50 dark:bg-yellow-900'
+                      ? isLessThanOneDay
+                        ? '' // Style handled by dynamicBg
+                        : 'bg-yellow-50 dark:bg-yellow-900'
                       : 'dark:bg-gray-700'
                 }`}
+                style={
+                  dynamicBg
+                    ? { backgroundColor: dynamicBg }
+                    : undefined
+                }
                 onClick={() => editTask(task)}
               >
                 <div className="flex items-start gap-3">
