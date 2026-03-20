@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Book, ListTodo, Gamepad2, Moon, Sun } from 'lucide-react'
+import { Book, ListTodo, Gamepad2, Moon, Sun, Target } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 
@@ -34,6 +34,11 @@ const items = [
     title: 'Game Center',
     url: '/game',
     icon: Gamepad2,
+  },
+  {
+    title: 'Daily Quests',
+    url: '/daily-quests',
+    icon: Target,
   },
 ]
 
