@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react'
 import { PlusCircle, Target, Trash, Clock, Edit } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -18,6 +20,7 @@ import { Label } from '@/components/ui/label'
 type Quest = {
   id: string
   name: string
+  frequency?: 'daily' | 'weekly'
   isDone: boolean
   lastCompletedAt: string | null
 }
@@ -26,6 +29,7 @@ type Game = {
   id: string
   name: string
   resetTime: string
+  weeklyResetDay?: number // 0 = Sunday, 1 = Monday... 6 = Saturday
   quests: Quest[]
 }
 
@@ -35,8 +39,8 @@ export default function DailyQuestsPage() {
   const [isQuestDialogOpen, setIsQuestDialogOpen] = useState(false)
   const [currentGameId, setCurrentGameId] = useState<string | null>(null)
 
-  const [gameForm, setGameForm] = useState({ id: '', name: '', resetTime: '00:00' })
-  const [questForm, setQuestForm] = useState({ id: '', name: '' })
+  const [gameForm, setGameForm] = useState<{ id: string, name: string, resetTime: string, weeklyResetDay: number }>({ id: '', name: '', resetTime: '00:00', weeklyResetDay: 1 })
+  const [questForm, setQuestForm] = useState<{ id: string, name: string, frequency: 'daily' | 'weekly' }>({ id: '', name: '', frequency: 'daily' })
 
   // Loading
   useEffect(() => {
@@ -55,21 +59,33 @@ export default function DailyQuestsPage() {
 
         const newGames = prevGames.map((game) => {
           const [resetHour, resetMinute] = game.resetTime.split(':').map(Number)
-          const resetDate = new Date(now)
-          resetDate.setHours(resetHour, resetMinute, 0, 0)
-
-          if (now < resetDate) {
+          
+          // Daily most recent reset
+          const dailyResetDate = new Date(now)
+          dailyResetDate.setHours(resetHour, resetMinute, 0, 0)
+          if (now < dailyResetDate) {
             // If the time hasn't passed today's reset time, the most recent reset was yesterday
-            resetDate.setDate(resetDate.getDate() - 1)
+            dailyResetDate.setDate(dailyResetDate.getDate() - 1)
           }
-          const mostRecentResetTime = resetDate.getTime()
+          const mostRecentDailyReset = dailyResetDate.getTime()
+
+          // Weekly most recent reset
+          const weeklyResetDay = game.weeklyResetDay ?? 1 // default Monday
+          const weeklyResetDate = new Date(dailyResetDate)
+          while (weeklyResetDate.getDay() !== weeklyResetDay) {
+            weeklyResetDate.setDate(weeklyResetDate.getDate() - 1)
+          }
+          const mostRecentWeeklyReset = weeklyResetDate.getTime()
 
           let gameChanged = false
           const newQuests = game.quests.map((quest) => {
             if (quest.isDone && quest.lastCompletedAt) {
               const completedAtTime = new Date(quest.lastCompletedAt).getTime()
+              const freq = quest.frequency || 'daily'
+              const resetThreshold = freq === 'weekly' ? mostRecentWeeklyReset : mostRecentDailyReset
+              
               // If last completed time is before the most recent reset, it should be unchecked
-              if (completedAtTime < mostRecentResetTime) {
+              if (completedAtTime < resetThreshold) {
                 gameChanged = true
                 hasChanges = true
                 return { ...quest, isDone: false, lastCompletedAt: null }
@@ -109,9 +125,9 @@ export default function DailyQuestsPage() {
   const saveGame = (e: React.FormEvent) => {
     e.preventDefault()
     if (gameForm.id) {
-      setGames(games.map(g => g.id === gameForm.id ? { ...g, name: gameForm.name, resetTime: gameForm.resetTime } : g))
+      setGames(games.map(g => g.id === gameForm.id ? { ...g, name: gameForm.name, resetTime: gameForm.resetTime, weeklyResetDay: gameForm.weeklyResetDay } : g))
     } else {
-      setGames([...games, { id: Date.now().toString(), name: gameForm.name, resetTime: gameForm.resetTime, quests: [] }])
+      setGames([...games, { id: Date.now().toString(), name: gameForm.name, resetTime: gameForm.resetTime, weeklyResetDay: gameForm.weeklyResetDay, quests: [] }])
     }
     setIsGameDialogOpen(false)
   }
@@ -129,12 +145,12 @@ export default function DailyQuestsPage() {
         if (questForm.id) {
           return {
             ...g,
-            quests: g.quests.map(q => q.id === questForm.id ? { ...q, name: questForm.name } : q)
+            quests: g.quests.map(q => q.id === questForm.id ? { ...q, name: questForm.name, frequency: questForm.frequency } : q)
           }
         } else {
           return {
             ...g,
-            quests: [...g.quests, { id: Date.now().toString(), name: questForm.name, isDone: false, lastCompletedAt: null }]
+            quests: [...g.quests, { id: Date.now().toString(), name: questForm.name, frequency: questForm.frequency, isDone: false, lastCompletedAt: null }]
           }
         }
       }
@@ -185,10 +201,10 @@ export default function DailyQuestsPage() {
 
           <Dialog open={isGameDialogOpen} onOpenChange={(open) => {
             setIsGameDialogOpen(open)
-            if (!open) setGameForm({ id: '', name: '', resetTime: '00:00' })
+            if (!open) setGameForm({ id: '', name: '', resetTime: '00:00', weeklyResetDay: 1 })
           }}>
             <DialogTrigger asChild>
-              <Button onClick={() => setGameForm({ id: '', name: '', resetTime: '00:00' })}>
+              <Button onClick={() => setGameForm({ id: '', name: '', resetTime: '00:00', weeklyResetDay: 1 })}>
                 <PlusCircle className="mr-2 size-4" /> Add Game
               </Button>
             </DialogTrigger>
@@ -209,19 +225,35 @@ export default function DailyQuestsPage() {
                     placeholder="e.g. Genshin Impact"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="resetTime">Daily Reset Time</Label>
-                  <Input
-                    id="resetTime"
-                    type="time"
-                    value={gameForm.resetTime}
-                    onChange={(e) => setGameForm({ ...gameForm, resetTime: e.target.value })}
-                    required
-                    className="dark:bg-gray-700 dark:text-white mt-1"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1 dark:text-gray-400">
-                    Your local time when the game refreshes daily quests.
-                  </p>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="resetTime">Reset Time</Label>
+                    <Input
+                      id="resetTime"
+                      type="time"
+                      value={gameForm.resetTime}
+                      onChange={(e) => setGameForm({ ...gameForm, resetTime: e.target.value })}
+                      required
+                      className="dark:bg-gray-700 dark:text-white mt-1"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label>Weekly Reset</Label>
+                    <Select value={gameForm.weeklyResetDay.toString()} onValueChange={(v) => setGameForm({...gameForm, weeklyResetDay: parseInt(v)})}>
+                      <SelectTrigger className="w-full mt-1 dark:bg-gray-700 dark:text-white border-muted">
+                        <SelectValue placeholder="Day" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Monday</SelectItem>
+                        <SelectItem value="2">Tuesday</SelectItem>
+                        <SelectItem value="3">Wednesday</SelectItem>
+                        <SelectItem value="4">Thursday</SelectItem>
+                        <SelectItem value="5">Friday</SelectItem>
+                        <SelectItem value="6">Saturday</SelectItem>
+                        <SelectItem value="0">Sunday</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full">{gameForm.id ? 'Update Game' : 'Save Game'}</Button>
               </form>
@@ -253,7 +285,7 @@ export default function DailyQuestsPage() {
                       size="icon"
                       className="h-8 w-8 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                       onClick={() => {
-                        setGameForm({ id: game.id, name: game.name, resetTime: game.resetTime })
+                        setGameForm({ id: game.id, name: game.name, resetTime: game.resetTime, weeklyResetDay: game.weeklyResetDay ?? 1 })
                         setIsGameDialogOpen(true)
                       }}
                     >
@@ -287,9 +319,12 @@ export default function DailyQuestsPage() {
                           />
                           <Label
                             htmlFor={`quest-[${game.id}]-[${quest.id}]`}
-                            className={`cursor-pointer leading-tight ${quest.isDone ? 'line-through text-muted-foreground dark:text-gray-500' : 'dark:text-gray-200'}`}
+                            className={`cursor-pointer leading-tight flex flex-col sm:flex-row sm:items-center gap-1.5 ${quest.isDone ? 'line-through text-muted-foreground dark:text-gray-500' : 'dark:text-gray-200'}`}
                           >
-                            {quest.name}
+                            <span>{quest.name}</span>
+                            {quest.frequency === 'weekly' && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 uppercase border-muted-foreground/30 text-muted-foreground">Weekly</Badge>
+                            )}
                           </Label>
                         </div>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex shrink-0">
@@ -299,7 +334,7 @@ export default function DailyQuestsPage() {
                               className="h-6 w-6"
                               onClick={() => {
                                 setCurrentGameId(game.id)
-                                setQuestForm({ id: quest.id, name: quest.name })
+                                setQuestForm({ id: quest.id, name: quest.name, frequency: quest.frequency || 'daily' })
                                 setIsQuestDialogOpen(true)
                               }}
                            >
@@ -324,7 +359,7 @@ export default function DailyQuestsPage() {
                   className="w-full mt-auto bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 dark:text-white border-dashed"
                   onClick={() => {
                     setCurrentGameId(game.id)
-                    setQuestForm({ id: '', name: '' })
+                    setQuestForm({ id: '', name: '', frequency: 'daily' })
                     setIsQuestDialogOpen(true)
                   }}
                 >
@@ -340,13 +375,13 @@ export default function DailyQuestsPage() {
           setIsQuestDialogOpen(open)
           if (!open) {
             setCurrentGameId(null)
-            setQuestForm({ id: '', name: '' })
+            setQuestForm({ id: '', name: '', frequency: 'daily' })
           }
         }}>
           <DialogContent className="dark:bg-gray-800 dark:text-white sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>{questForm.id ? 'Edit Quest' : 'Add New Quest'}</DialogTitle>
-              <DialogDescription className="dark:text-gray-400">Enter the name of your daily task.</DialogDescription>
+              <DialogDescription className="dark:text-gray-400">Enter the name and frequency of your task.</DialogDescription>
             </DialogHeader>
             <form onSubmit={saveQuest} className="space-y-4">
               <div>
@@ -359,6 +394,18 @@ export default function DailyQuestsPage() {
                   className="dark:bg-gray-700 dark:text-white mt-1"
                   placeholder="e.g. Login to receive rewards..."
                 />
+              </div>
+              <div>
+                <Label>Frequency</Label>
+                <Select value={questForm.frequency} onValueChange={(v: 'daily'|'weekly') => setQuestForm({...questForm, frequency: v})}>
+                  <SelectTrigger className="w-full mt-1 dark:bg-gray-700 dark:text-white border-muted">
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full">{questForm.id ? 'Update Quest' : 'Add Quest'}</Button>
             </form>
