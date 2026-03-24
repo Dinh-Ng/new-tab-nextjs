@@ -190,6 +190,47 @@ export default function DailyQuestsPage() {
     }))
   }
 
+  const renderQuestItem = (gameId: string, quest: Quest) => (
+    <div key={quest.id} className="flex items-start justify-between group">
+      <div className="flex items-start gap-3 flex-1 mr-2 pt-1">
+        <Checkbox
+          id={`quest-[${gameId}]-[${quest.id}]`}
+          checked={quest.isDone}
+          onCheckedChange={() => toggleQuest(gameId, quest.id)}
+          className="mt-0.5"
+        />
+        <Label
+          htmlFor={`quest-[${gameId}]-[${quest.id}]`}
+          className={`cursor-pointer leading-tight ${quest.isDone ? 'line-through text-muted-foreground dark:text-gray-500' : 'dark:text-gray-200'}`}
+        >
+          {quest.name}
+        </Label>
+      </div>
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex shrink-0">
+         <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => {
+              setCurrentGameId(gameId)
+              setQuestForm({ id: quest.id, name: quest.name, frequency: quest.frequency || 'daily' })
+              setIsQuestDialogOpen(true)
+            }}
+         >
+           <Edit className="size-3 text-muted-foreground" />
+         </Button>
+         <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 hover:bg-red-50 dark:hover:bg-red-900/30"
+            onClick={() => deleteQuest(gameId, quest.id)}
+         >
+           <Trash className="size-3 text-red-400" />
+         </Button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen w-full bg-white dark:bg-gray-900">
       <div className="container mx-auto p-4 max-w-7xl">
@@ -302,55 +343,27 @@ export default function DailyQuestsPage() {
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-3 mb-4 min-h-[100px]">
+                <div className="flex-1 space-y-4 mb-4 min-h-[100px]">
                   {game.quests.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-sm text-muted-foreground italic text-center text-gray-400">No quests added.</p>
                     </div>
                   ) : (
-                    game.quests.map((quest) => (
-                      <div key={quest.id} className="flex items-start justify-between group">
-                        <div className="flex items-start gap-3 flex-1 mr-2 pt-1">
-                          <Checkbox
-                            id={`quest-[${game.id}]-[${quest.id}]`}
-                            checked={quest.isDone}
-                            onCheckedChange={() => toggleQuest(game.id, quest.id)}
-                            className="mt-0.5"
-                          />
-                          <Label
-                            htmlFor={`quest-[${game.id}]-[${quest.id}]`}
-                            className={`cursor-pointer leading-tight flex flex-col sm:flex-row sm:items-center gap-1.5 ${quest.isDone ? 'line-through text-muted-foreground dark:text-gray-500' : 'dark:text-gray-200'}`}
-                          >
-                            <span>{quest.name}</span>
-                            {quest.frequency === 'weekly' && (
-                              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 uppercase border-muted-foreground/30 text-muted-foreground">Weekly</Badge>
-                            )}
-                          </Label>
+                    <>
+                      {game.quests.filter(q => q.frequency !== 'weekly').length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Daily</h4>
+                          {game.quests.filter(q => q.frequency !== 'weekly').map(q => renderQuestItem(game.id, q))}
                         </div>
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex shrink-0">
-                           <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => {
-                                setCurrentGameId(game.id)
-                                setQuestForm({ id: quest.id, name: quest.name, frequency: quest.frequency || 'daily' })
-                                setIsQuestDialogOpen(true)
-                              }}
-                           >
-                             <Edit className="size-3 text-muted-foreground" />
-                           </Button>
-                           <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 hover:bg-red-50 dark:hover:bg-red-900/30"
-                              onClick={() => deleteQuest(game.id, quest.id)}
-                           >
-                             <Trash className="size-3 text-red-400" />
-                           </Button>
+                      )}
+                      
+                      {game.quests.filter(q => q.frequency === 'weekly').length > 0 && (
+                        <div className={`space-y-3 ${game.quests.filter(q => q.frequency !== 'weekly').length > 0 ? 'pt-4 border-t dark:border-gray-800' : ''}`}>
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Weekly</h4>
+                          {game.quests.filter(q => q.frequency === 'weekly').map(q => renderQuestItem(game.id, q))}
                         </div>
-                      </div>
-                    ))
+                      )}
+                    </>
                   )}
                 </div>
 
