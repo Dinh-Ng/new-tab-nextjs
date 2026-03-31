@@ -86,3 +86,315 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* ===========================
+   SIDEBAR PREMIUM STYLES
+   =========================== */
+
+/* Sidebar background */
+.sidebar-premium {
+  background: linear-gradient(160deg, hsl(240, 20%, 97%) 0%, hsl(240, 15%, 94%) 100%);
+  border-right: 1px solid hsl(240, 10%, 90%);
+  box-shadow: 4px 0 24px -4px rgba(0, 0, 0, 0.06);
+}
+
+.dark .sidebar-premium {
+  background: linear-gradient(160deg, hsl(240, 15%, 10%) 0%, hsl(240, 12%, 8%) 100%);
+  border-right: 1px solid hsl(240, 10%, 16%);
+  box-shadow: 4px 0 24px -4px rgba(0, 0, 0, 0.4);
+}
+
+/* Header / Brand */
+.sidebar-header {
+  border-bottom: 1px solid hsl(240, 10%, 90%);
+}
+.dark .sidebar-header {
+  border-bottom: 1px solid hsl(240, 10%, 16%);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, hsl(252, 80%, 60%), hsl(220, 80%, 60%));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(110, 80, 220, 0.35);
+  flex-shrink: 0;
+}
+
+.sidebar-logo-icon {
+  width: 20px;
+  height: 20px;
+  color: #fff;
+  stroke-width: 2.5;
+}
+
+.sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: hsl(240, 20%, 10%);
+  line-height: 1;
+}
+
+.dark .sidebar-brand-name {
+  color: hsl(0, 0%, 96%);
+}
+
+.sidebar-brand-tagline {
+  font-size: 11px;
+  color: hsl(240, 5%, 55%);
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Section label */
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: hsl(240, 5%, 55%);
+  padding: 8px 12px 4px;
+}
+
+/* Nav item */
+.sidebar-menu-btn {
+  background: transparent !important;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  cursor: pointer;
+  width: 100%;
+}
+
+.sidebar-nav-item:hover {
+  background: hsl(240, 10%, 92%);
+  transform: translateX(2px);
+}
+
+.dark .sidebar-nav-item:hover {
+  background: hsl(240, 8%, 16%);
+}
+
+.sidebar-nav-item.active {
+  background: linear-gradient(135deg, hsl(252, 80%, 64%) 0%, hsl(220, 80%, 64%) 100%);
+  box-shadow: 0 4px 16px rgba(110, 80, 220, 0.3);
+}
+
+.sidebar-nav-item.active:hover {
+  transform: translateX(2px);
+  box-shadow: 0 6px 20px rgba(110, 80, 220, 0.4);
+}
+
+/* Nav icon wrap */
+.sidebar-nav-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(240, 10%, 90%);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dark .sidebar-nav-icon-wrap {
+  background: hsl(240, 8%, 18%);
+}
+
+.sidebar-nav-icon-wrap.active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.sidebar-nav-icon {
+  width: 16px;
+  height: 16px;
+  color: hsl(240, 5%, 40%);
+  stroke-width: 2;
+  transition: color 0.2s ease;
+}
+
+.dark .sidebar-nav-icon {
+  color: hsl(240, 5%, 65%);
+}
+
+.sidebar-nav-item.active .sidebar-nav-icon {
+  color: #fff;
+}
+
+/* Nav text */
+.sidebar-nav-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-nav-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: hsl(240, 10%, 20%);
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.dark .sidebar-nav-title {
+  color: hsl(0, 0%, 88%);
+}
+
+.sidebar-nav-item.active .sidebar-nav-title {
+  color: #fff;
+}
+
+.sidebar-nav-desc {
+  font-size: 11px;
+  color: hsl(240, 5%, 55%);
+  line-height: 1;
+  font-weight: 400;
+  transition: color 0.2s;
+}
+
+.sidebar-nav-item.active .sidebar-nav-desc {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Active dot indicator */
+.sidebar-active-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.85); }
+}
+
+/* Footer */
+.sidebar-footer-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(240, 10%, 86%), transparent);
+  margin-bottom: 12px;
+}
+
+.dark .sidebar-footer-divider {
+  background: linear-gradient(90deg, transparent, hsl(240, 8%, 20%), transparent);
+}
+
+.sidebar-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-version {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebar-version-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(140, 60%, 50%);
+  box-shadow: 0 0 6px hsl(140, 60%, 50%);
+}
+
+.sidebar-version-text {
+  font-size: 11px;
+  color: hsl(240, 5%, 55%);
+  font-weight: 500;
+}
+
+/* Theme toggle button */
+.sidebar-theme-toggle {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid hsl(240, 10%, 88%);
+  background: hsl(0, 0%, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.dark .sidebar-theme-toggle {
+  border-color: hsl(240, 8%, 20%);
+  background: hsl(240, 8%, 14%);
+}
+
+.sidebar-theme-toggle:hover {
+  background: hsl(252, 80%, 64%);
+  border-color: hsl(252, 80%, 64%);
+  box-shadow: 0 4px 12px rgba(110, 80, 220, 0.35);
+  transform: scale(1.05);
+}
+
+.sidebar-theme-toggle:hover .sidebar-theme-icon {
+  color: #fff !important;
+}
+
+.sidebar-theme-icon {
+  width: 15px;
+  height: 15px;
+  position: absolute;
+  transition: all 0.3s ease;
+  stroke-width: 2;
+}
+
+.sidebar-theme-icon.sun {
+  color: hsl(40, 90%, 50%);
+  transform: rotate(0deg) scale(1);
+}
+
+.dark .sidebar-theme-icon.sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0);
+}
+
+.sidebar-theme-icon.moon {
+  color: hsl(240, 5%, 55%);
+  opacity: 0;
+  transform: rotate(-90deg) scale(0);
+}
+
+.dark .sidebar-theme-icon.moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+  color: hsl(220, 80%, 75%);
+}
+
