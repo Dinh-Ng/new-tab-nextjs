@@ -21,6 +21,8 @@ type Quest = {
   id: string
   name: string
   frequency?: 'daily' | 'weekly'
+  targetCount?: number
+  currentCount?: number
   isDone: boolean
   lastCompletedAt: string | null
 }
@@ -40,7 +42,7 @@ export default function DailyQuestsPage() {
   const [currentGameId, setCurrentGameId] = useState<string | null>(null)
 
   const [gameForm, setGameForm] = useState<{ id: string, name: string, resetTime: string, weeklyResetDay: number }>({ id: '', name: '', resetTime: '00:00', weeklyResetDay: 1 })
-  const [questForm, setQuestForm] = useState<{ id: string, name: string, frequency: 'daily' | 'weekly' }>({ id: '', name: '', frequency: 'daily' })
+  const [questForm, setQuestForm] = useState<{ id: string, name: string, frequency: 'daily' | 'weekly', isMultiStep: boolean, targetCount: number }>({ id: '', name: '', frequency: 'daily', isMultiStep: false, targetCount: 2 })
 
   // Loading
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function DailyQuestsPage() {
 
         const newGames = prevGames.map((game) => {
           const [resetHour, resetMinute] = game.resetTime.split(':').map(Number)
-          
+
           // Daily most recent reset
           const dailyResetDate = new Date(now)
           dailyResetDate.setHours(resetHour, resetMinute, 0, 0)
@@ -83,12 +85,12 @@ export default function DailyQuestsPage() {
               const completedAtTime = new Date(quest.lastCompletedAt).getTime()
               const freq = quest.frequency || 'daily'
               const resetThreshold = freq === 'weekly' ? mostRecentWeeklyReset : mostRecentDailyReset
-              
+
               // If last completed time is before the most recent reset, it should be unchecked
               if (completedAtTime < resetThreshold) {
                 gameChanged = true
                 hasChanges = true
-                return { ...quest, isDone: false, lastCompletedAt: null }
+                return { ...quest, isDone: false, lastCompletedAt: null, currentCount: 0 }
               }
             }
             return quest
@@ -145,12 +147,26 @@ export default function DailyQuestsPage() {
         if (questForm.id) {
           return {
             ...g,
-            quests: g.quests.map(q => q.id === questForm.id ? { ...q, name: questForm.name, frequency: questForm.frequency } : q)
+            quests: g.quests.map(q => q.id === questForm.id ? {
+              ...q,
+              name: questForm.name,
+              frequency: questForm.frequency,
+              targetCount: questForm.isMultiStep ? questForm.targetCount : undefined,
+              currentCount: questForm.isMultiStep ? (q.currentCount || 0) : undefined
+            } : q)
           }
         } else {
           return {
             ...g,
-            quests: [...g.quests, { id: Date.now().toString(), name: questForm.name, frequency: questForm.frequency, isDone: false, lastCompletedAt: null }]
+            quests: [...g.quests, {
+              id: Date.now().toString(),
+              name: questForm.name,
+              frequency: questForm.frequency,
+              targetCount: questForm.isMultiStep ? questForm.targetCount : undefined,
+              currentCount: questForm.isMultiStep ? 0 : undefined,
+              isDone: false,
+              lastCompletedAt: null
+            }]
           }
         }
       }
@@ -179,6 +195,31 @@ export default function DailyQuestsPage() {
               return {
                 ...q,
                 isDone: newIsDone,
+                currentCount: newIsDone ? (q.targetCount || 0) : 0,
+                lastCompletedAt: newIsDone ? new Date().toISOString() : null
+              }
+            }
+            return q
+          })
+        }
+      }
+      return g
+    }))
+  }
+
+  const incrementQuest = (gameId: string, questId: string) => {
+    setGames(games.map(g => {
+      if (g.id === gameId) {
+        return {
+          ...g,
+          quests: g.quests.map(q => {
+            if (q.id === questId && q.targetCount && (q.currentCount || 0) < q.targetCount) {
+              const newCount = (q.currentCount || 0) + 1
+              const newIsDone = newCount >= q.targetCount
+              return {
+                ...q,
+                currentCount: newCount,
+                isDone: newIsDone,
                 lastCompletedAt: newIsDone ? new Date().toISOString() : null
               }
             }
@@ -192,7 +233,7 @@ export default function DailyQuestsPage() {
 
   const renderQuestItem = (gameId: string, quest: Quest) => (
     <div key={quest.id} className="flex items-start justify-between group">
-      <div className="flex items-start gap-3 flex-1 mr-2 pt-1">
+      <div className="flex items-center gap-3 flex-1 mr-2 pt-1">
         <Checkbox
           id={`quest-[${gameId}]-[${quest.id}]`}
           checked={quest.isDone}
@@ -205,6 +246,23 @@ export default function DailyQuestsPage() {
         >
           {quest.name}
         </Label>
+
+        {quest.targetCount && quest.targetCount > 1 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={`h-7 px-3 py-1 text-xs items-center justify-center rounded-md ml-2 font-bold tracking-wide shadow-sm transition-all ${quest.isDone ? 'text-muted-foreground border-muted-foreground/30 bg-muted/30' : 'text-blue-600 border-blue-400/50 bg-blue-50 hover:bg-blue-100 hover:scale-[1.03] active:scale-95 dark:bg-blue-500/10 dark:border-blue-400/30 dark:hover:bg-blue-500/20 dark:text-blue-400'}`}
+            onClick={(e) => {
+               e.preventDefault()
+               e.stopPropagation()
+               incrementQuest(gameId, quest.id)
+            }}
+            disabled={quest.isDone}
+          >
+            {quest.currentCount || 0} / {quest.targetCount}
+          </Button>
+        )}
       </div>
       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex shrink-0">
          <Button
@@ -213,7 +271,7 @@ export default function DailyQuestsPage() {
             className="h-6 w-6"
             onClick={() => {
               setCurrentGameId(gameId)
-              setQuestForm({ id: quest.id, name: quest.name, frequency: quest.frequency || 'daily' })
+              setQuestForm({ id: quest.id, name: quest.name, frequency: quest.frequency || 'daily', isMultiStep: (quest.targetCount || 1) > 1, targetCount: quest.targetCount || 2 })
               setIsQuestDialogOpen(true)
             }}
          >
@@ -356,7 +414,7 @@ export default function DailyQuestsPage() {
                           {game.quests.filter(q => q.frequency !== 'weekly').map(q => renderQuestItem(game.id, q))}
                         </div>
                       )}
-                      
+
                       {game.quests.filter(q => q.frequency === 'weekly').length > 0 && (
                         <div className={`space-y-3 ${game.quests.filter(q => q.frequency !== 'weekly').length > 0 ? 'pt-4 border-t dark:border-gray-800' : ''}`}>
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Weekly</h4>
@@ -372,7 +430,7 @@ export default function DailyQuestsPage() {
                   className="w-full mt-auto bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 dark:text-white border-dashed"
                   onClick={() => {
                     setCurrentGameId(game.id)
-                    setQuestForm({ id: '', name: '', frequency: 'daily' })
+                    setQuestForm({ id: '', name: '', frequency: 'daily', isMultiStep: false, targetCount: 2 })
                     setIsQuestDialogOpen(true)
                   }}
                 >
@@ -388,7 +446,7 @@ export default function DailyQuestsPage() {
           setIsQuestDialogOpen(open)
           if (!open) {
             setCurrentGameId(null)
-            setQuestForm({ id: '', name: '', frequency: 'daily' })
+            setQuestForm({ id: '', name: '', frequency: 'daily', isMultiStep: false, targetCount: 2 })
           }
         }}>
           <DialogContent className="dark:bg-gray-800 dark:text-white sm:max-w-[425px]">
@@ -420,6 +478,32 @@ export default function DailyQuestsPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="pt-3 border-t dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isMultiStep"
+                    checked={questForm.isMultiStep}
+                    onCheckedChange={(c) => setQuestForm({...questForm, isMultiStep: c === true})}
+                  />
+                  <Label htmlFor="isMultiStep" className="cursor-pointer">Requires multiple completions?</Label>
+                </div>
+                {questForm.isMultiStep && (
+                  <div className="mt-4">
+                    <Label htmlFor="targetCount">Target Count</Label>
+                    <Input
+                      id="targetCount"
+                      type="number"
+                      min="2"
+                      value={questForm.targetCount}
+                      onChange={(e) => setQuestForm({ ...questForm, targetCount: parseInt(e.target.value) || 2 })}
+                      required
+                      className="dark:bg-gray-700 dark:text-white mt-1"
+                    />
+                  </div>
+                )}
+              </div>
+
               <Button type="submit" className="w-full">{questForm.id ? 'Update Quest' : 'Add Quest'}</Button>
             </form>
           </DialogContent>
