@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { PlusCircle, Target, Trash, Clock, Edit } from 'lucide-react'
+import { PlusCircle, Target, Trash, Clock, Edit, ChevronUp, ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -231,7 +231,29 @@ export default function DailyQuestsPage() {
     }))
   }
 
-  const renderQuestItem = (gameId: string, quest: Quest) => (
+  const moveQuest = (gameId: string, questId: string, direction: 'up' | 'down') => {
+    setGames(games.map(g => {
+      if (g.id !== gameId) return g
+      const quests = [...g.quests]
+      const idx = quests.findIndex(q => q.id === questId)
+      if (idx === -1) return g
+      const freq = quests[idx].frequency || 'daily'
+      // find sibling indices with same frequency
+      const siblingIndices = quests
+        .map((q, i) => ({ q, i }))
+        .filter(({ q }) => (q.frequency || 'daily') === freq)
+        .map(({ i }) => i)
+      const posInSiblings = siblingIndices.indexOf(idx)
+      const targetPos = direction === 'up' ? posInSiblings - 1 : posInSiblings + 1
+      if (targetPos < 0 || targetPos >= siblingIndices.length) return g
+      const targetIdx = siblingIndices[targetPos]
+      // swap
+      ;[quests[idx], quests[targetIdx]] = [quests[targetIdx], quests[idx]]
+      return { ...g, quests }
+    }))
+  }
+
+  const renderQuestItem = (gameId: string, quest: Quest, isFirst: boolean, isLast: boolean) => (
     <div key={quest.id} className="flex items-start justify-between group">
       <div className="flex items-center gap-3 flex-1 mr-2 pt-1">
         <Checkbox
@@ -264,7 +286,25 @@ export default function DailyQuestsPage() {
           </Button>
         )}
       </div>
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex shrink-0">
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex shrink-0 items-center">
+         <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 disabled:opacity-20"
+            disabled={isFirst}
+            onClick={() => moveQuest(gameId, quest.id, 'up')}
+         >
+           <ChevronUp className="size-3 text-muted-foreground" />
+         </Button>
+         <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 disabled:opacity-20"
+            disabled={isLast}
+            onClick={() => moveQuest(gameId, quest.id, 'down')}
+         >
+           <ChevronDown className="size-3 text-muted-foreground" />
+         </Button>
          <Button
             variant="ghost"
             size="icon"
@@ -411,14 +451,14 @@ export default function DailyQuestsPage() {
                       {game.quests.filter(q => q.frequency !== 'weekly').length > 0 && (
                         <div className="space-y-3">
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Daily</h4>
-                          {game.quests.filter(q => q.frequency !== 'weekly').map(q => renderQuestItem(game.id, q))}
+                          {game.quests.filter(q => q.frequency !== 'weekly').map((q, i, arr) => renderQuestItem(game.id, q, i === 0, i === arr.length - 1))}
                         </div>
                       )}
 
                       {game.quests.filter(q => q.frequency === 'weekly').length > 0 && (
                         <div className={`space-y-3 ${game.quests.filter(q => q.frequency !== 'weekly').length > 0 ? 'pt-4 border-t dark:border-gray-800' : ''}`}>
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Weekly</h4>
-                          {game.quests.filter(q => q.frequency === 'weekly').map(q => renderQuestItem(game.id, q))}
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 text-center">Weekly</h4>
+                          {game.quests.filter(q => q.frequency === 'weekly').map((q, i, arr) => renderQuestItem(game.id, q, i === 0, i === arr.length - 1))}
                         </div>
                       )}
                     </>
