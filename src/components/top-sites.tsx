@@ -113,8 +113,8 @@ export function TopSites() {
                   alt={site.name} 
                   className="size-6 sm:size-7 rounded-sm"
                   onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
+                    const target = e.target as HTMLImageElement
+                    target.onerror = null
                     target.src = '' // Fallback to missing logic via a clear string 
                   }}
                 />
