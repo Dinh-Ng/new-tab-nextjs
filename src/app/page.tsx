@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { BookOpen, CheckSquare, ArrowRight, Gamepad2 } from 'lucide-react'
+import { BookOpen, CheckSquare, ArrowRight, Gamepad2, Target } from 'lucide-react'
+import { TopSites } from '@/components/top-sites'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -33,11 +34,20 @@ export default function Home() {
       href: '/game',
       color: 'text-rose-500',
     },
+    {
+      title: 'Daily Quests',
+      description: 'Track and manage your daily game tasks.',
+      icon: Target,
+      href: '/daily-quests',
+      color: 'text-blue-500',
+    },
   ]
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center bg-muted/30 p-4 md:p-10">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+    <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col bg-muted/30 p-4 md:p-10">
+      <TopSites />
+      
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 mt-4 md:mt-8">
         <div className="flex flex-col items-start gap-4 text-center md:items-center">
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
             Welcome Back
