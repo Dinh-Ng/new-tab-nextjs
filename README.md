@@ -1,4 +1,14 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project designed as a personal New Tab page, featuring a powerful **Daily Quest Tracker**.
+
+## Features
+
+- **Daily Quest Tracker**: Manage your gaming and daily tasks with ease.
+  - **Custom Reset Times**: Set specific hours/minutes for daily and weekly resets.
+  - **Frequency Support**: Differentiate between Daily and Weekly tasks.
+  - **Multi-step Quests**: Track progress for tasks requiring multiple actions (e.g., 3/5 matches).
+  - **Task Reordering**: Organize your quests using Up/Down arrows within their groups.
+  - **Auto-reset Logic**: Tasks automatically uncheck based on the configured game reset time.
+  - **Game-based Grouping**: Group quests by specific games/projects.
 
 ## Getting Started
 
