@@ -264,7 +264,7 @@ export default function DailyQuestsPage() {
         />
         <Label
           htmlFor={`quest-[${gameId}]-[${quest.id}]`}
-          className={`cursor-pointer leading-tight ${quest.isDone ? 'line-through text-muted-foreground dark:text-gray-500' : 'dark:text-gray-200'}`}
+          className={`cursor-pointer leading-tight ${quest.isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}
         >
           {quest.name}
         </Label>
@@ -330,10 +330,10 @@ export default function DailyQuestsPage() {
   )
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-gray-900">
+    <div className="min-h-[calc(100vh-3rem)] w-full bg-background">
       <div className="container mx-auto p-4 max-w-7xl">
         <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold flex items-center gap-2 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Target className="size-6 text-blue-500" />
             Daily Quests
           </h1>
@@ -347,10 +347,10 @@ export default function DailyQuestsPage() {
                 <PlusCircle className="mr-2 size-4" /> Add Game
               </Button>
             </DialogTrigger>
-            <DialogContent className="dark:bg-gray-800 dark:text-white sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>{gameForm.id ? 'Edit Game' : 'Add New Game'}</DialogTitle>
-                <DialogDescription className="dark:text-gray-400">Setup your game and its daily reset time.</DialogDescription>
+                <DialogDescription>Setup your game and its daily reset time.</DialogDescription>
               </DialogHeader>
               <form onSubmit={saveGame} className="space-y-4">
                 <div>
@@ -360,7 +360,7 @@ export default function DailyQuestsPage() {
                     value={gameForm.name}
                     onChange={(e) => setGameForm({ ...gameForm, name: e.target.value })}
                     required
-                    className="dark:bg-gray-700 dark:text-white mt-1"
+                    className="mt-1"
                     placeholder="e.g. Genshin Impact"
                   />
                 </div>
@@ -373,13 +373,13 @@ export default function DailyQuestsPage() {
                       value={gameForm.resetTime}
                       onChange={(e) => setGameForm({ ...gameForm, resetTime: e.target.value })}
                       required
-                      className="dark:bg-gray-700 dark:text-white mt-1"
+                      className="mt-1"
                     />
                   </div>
                   <div className="flex-1">
                     <Label>Weekly Reset</Label>
                     <Select value={gameForm.weeklyResetDay.toString()} onValueChange={(v) => setGameForm({...gameForm, weeklyResetDay: parseInt(v)})}>
-                      <SelectTrigger className="w-full mt-1 dark:bg-gray-700 dark:text-white border-muted">
+                      <SelectTrigger className="w-full mt-1">
                         <SelectValue placeholder="Day" />
                       </SelectTrigger>
                       <SelectContent>
@@ -401,19 +401,19 @@ export default function DailyQuestsPage() {
         </div>
 
         {games.length === 0 ? (
-          <div className="text-center py-16 dark:text-gray-400 border border-dashed rounded-xl dark:border-gray-800">
-            <Target className="mx-auto h-16 w-16 text-gray-300 dark:text-gray-700 mb-4" />
-            <h3 className="text-lg font-medium dark:text-gray-300">No games tracking</h3>
-            <p className="mt-2 text-sm">Click &quot;Add Game&quot; to started tracking your daily quests!</p>
+          <div className="text-center py-20 border border-dashed rounded-xl">
+            <Target className="mx-auto h-16 w-16 text-muted-foreground/20 mb-4" />
+            <h3 className="text-lg font-semibold">No games yet</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Click &quot;Add Game&quot; to start tracking your daily quests!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {games.map((game) => (
-              <div key={game.id} className="border rounded-xl p-5 bg-card dark:bg-gray-800 shadow-sm flex flex-col dark:border-gray-700">
-                <div className="flex items-start justify-between mb-4 border-b dark:border-gray-700 pb-3">
+              <div key={game.id} className="border rounded-xl p-5 bg-card shadow-sm flex flex-col">
+                <div className="flex items-start justify-between mb-4 border-b pb-3">
                   <div className="pr-4 overflow-hidden">
-                    <h2 className="text-lg font-bold dark:text-white truncate" title={game.name}>{game.name}</h2>
-                    <div className="flex items-center text-xs text-muted-foreground dark:text-gray-400 mt-1">
+                    <h2 className="text-lg font-bold truncate" title={game.name}>{game.name}</h2>
+                    <div className="flex items-center text-xs text-muted-foreground mt-1">
                       <Clock className="size-3 mr-1" />
                       Reset time: {game.resetTime}
                     </div>
@@ -456,7 +456,7 @@ export default function DailyQuestsPage() {
                       )}
 
                       {game.quests.filter(q => q.frequency === 'weekly').length > 0 && (
-                        <div className={`space-y-3 ${game.quests.filter(q => q.frequency !== 'weekly').length > 0 ? 'pt-4 border-t dark:border-gray-800' : ''}`}>
+                        <div className={`space-y-3 ${game.quests.filter(q => q.frequency !== 'weekly').length > 0 ? 'pt-4 border-t' : ''}`}>
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 text-center">Weekly</h4>
                           {game.quests.filter(q => q.frequency === 'weekly').map((q, i, arr) => renderQuestItem(game.id, q, i === 0, i === arr.length - 1))}
                         </div>
@@ -467,7 +467,7 @@ export default function DailyQuestsPage() {
 
                 <Button
                   variant="outline"
-                  className="w-full mt-auto bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 dark:text-white border-dashed"
+                  className="w-full mt-auto border-dashed"
                   onClick={() => {
                     setCurrentGameId(game.id)
                     setQuestForm({ id: '', name: '', frequency: 'daily', isMultiStep: false, targetCount: 2 })
@@ -489,10 +489,10 @@ export default function DailyQuestsPage() {
             setQuestForm({ id: '', name: '', frequency: 'daily', isMultiStep: false, targetCount: 2 })
           }
         }}>
-          <DialogContent className="dark:bg-gray-800 dark:text-white sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>{questForm.id ? 'Edit Quest' : 'Add New Quest'}</DialogTitle>
-              <DialogDescription className="dark:text-gray-400">Enter the name and frequency of your task.</DialogDescription>
+              <DialogDescription>Enter the name and frequency of your task.</DialogDescription>
             </DialogHeader>
             <form onSubmit={saveQuest} className="space-y-4">
               <div>
@@ -502,14 +502,14 @@ export default function DailyQuestsPage() {
                   value={questForm.name}
                   onChange={(e) => setQuestForm({ ...questForm, name: e.target.value })}
                   required
-                  className="dark:bg-gray-700 dark:text-white mt-1"
+                  className="mt-1"
                   placeholder="e.g. Login to receive rewards..."
                 />
               </div>
               <div>
                 <Label>Frequency</Label>
                 <Select value={questForm.frequency} onValueChange={(v: 'daily'|'weekly') => setQuestForm({...questForm, frequency: v})}>
-                  <SelectTrigger className="w-full mt-1 dark:bg-gray-700 dark:text-white border-muted">
+                  <SelectTrigger className="w-full mt-1">
                     <SelectValue placeholder="Select frequency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -519,7 +519,7 @@ export default function DailyQuestsPage() {
                 </Select>
               </div>
 
-              <div className="pt-3 border-t dark:border-gray-700">
+              <div className="pt-3 border-t">
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="isMultiStep"
@@ -538,7 +538,7 @@ export default function DailyQuestsPage() {
                       value={questForm.targetCount}
                       onChange={(e) => setQuestForm({ ...questForm, targetCount: parseInt(e.target.value) || 2 })}
                       required
-                      className="dark:bg-gray-700 dark:text-white mt-1"
+                      className="mt-1"
                     />
                   </div>
                 )}

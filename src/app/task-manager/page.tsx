@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { AlertCircle, Filter, PlusCircle, Trash } from 'lucide-react'
+import { AlertCircle, CheckSquare, Filter, PlusCircle, Trash } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import { Badge } from '@/components/ui/badge'
@@ -46,8 +46,8 @@ const stringToColor = (str: string, isDark: boolean) => {
   }
   const hue = hash % 360
   return isDark
-    ? `hsl(${hue}, 80%, 75%)` // Brighter colors for dark mode
-    : `hsl(${hue}, 70%, 45%)` // Darker colors for light mode
+    ? `hsl(${hue}, 80%, 75%)`
+    : `hsl(${hue}, 70%, 45%)`
 }
 
 export default function Component() {
@@ -64,6 +64,7 @@ export default function Component() {
   const [remainingDays, setRemainingDays] = useState('')
   const [remainingHours, setRemainingHours] = useState('')
   const [remainingMinutes, setRemainingMinutes] = useState('')
+  const [remainingError, setRemainingError] = useState('')
 
   useEffect(() => {
     const storedTasks = localStorage.getItem('tasks')
@@ -78,14 +79,10 @@ export default function Component() {
     setAllTags(tags)
   }, [tasks])
 
-
   useEffect(() => {
     const intervalId = setInterval(() => {
-      // Force a re-render of the component
       setTasks((prevTasks) => [...prevTasks])
-    }, 60000) // 60000 ms = 1 minute
-
-    // Cleanup function to clear the interval when the component unmounts
+    }, 60000)
     return () => clearInterval(intervalId)
   }, [])
 
@@ -137,31 +134,27 @@ export default function Component() {
         const minutes = remainingMinutes === '' ? 0 : parseInt(remainingMinutes)
 
         if (days === 0 && hours === 0 && minutes === 0) {
-          // Show error message
-          alert('Please input at least one value for days, hours, or minutes.')
+          setRemainingError('Vui lòng nhập ít nhất một giá trị (ngày, giờ, hoặc phút).')
           return
         }
 
+        setRemainingError('')
         const now = new Date()
         const deadline = new Date(now.getTime() + days * 24 * 60 * 60 * 1000 + hours * 60 * 60 * 1000 + minutes * 60 * 1000)
 
-        // Format date as YYYY-MM-DD using local timezone
         const year = deadline.getFullYear()
         const month = String(deadline.getMonth() + 1).padStart(2, '0')
         const day = String(deadline.getDate()).padStart(2, '0')
         taskToSave.endDate = `${year}-${month}-${day}`
 
-        // Format time as HH:MM using local timezone
         const endHours = String(deadline.getHours()).padStart(2, '0')
         const endMinutes = String(deadline.getMinutes()).padStart(2, '0')
         taskToSave.endTime = `${endHours}:${endMinutes}`
       }
       if (taskToSave.id === 0) {
-        // Creating a new task
         const newTask = { ...taskToSave, id: Date.now() }
         setTasks([...tasks, newTask])
       } else {
-        // Updating an existing task
         setTasks(
           tasks.map((task) => (task.id === taskToSave.id ? taskToSave : task))
         )
@@ -172,13 +165,13 @@ export default function Component() {
       setRemainingDays('')
       setRemainingHours('')
       setRemainingMinutes('')
+      setRemainingError('')
     }
   }
 
   const calculateTimeLeft = (endDate: string, endTime: string) => {
     const now = new Date()
     const deadline = new Date(`${endDate}T${endTime}`)
-
     const diff = deadline.getTime() - now.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
@@ -209,6 +202,7 @@ export default function Component() {
     setRemainingDays('')
     setRemainingHours('')
     setRemainingMinutes('')
+    setRemainingError('')
   }
 
   const sortTasks = (tasks: Task[]): Task[] => {
@@ -216,7 +210,6 @@ export default function Component() {
       const aTimeLeft = calculateTimeLeft(a.endDate, a.endTime)
       const bTimeLeft = calculateTimeLeft(b.endDate, b.endTime)
 
-      // Move important tasks with less than 1 day remaining to the top
       if (
         a.important &&
         aTimeLeft.isLessThanOneDay &&
@@ -232,7 +225,6 @@ export default function Component() {
         return 1
       }
 
-      // For other tasks, sort by end date and time
       return (
         new Date(`${a.endDate}T${a.endTime}`).getTime() -
         new Date(`${b.endDate}T${b.endTime}`).getTime()
@@ -246,230 +238,212 @@ export default function Component() {
 
   const getUrgencyColor = (diff: number, isDark: boolean) => {
     const oneDay = 24 * 60 * 60 * 1000
-    const ratio = Math.max(0, Math.min(1, diff / oneDay)) // 0 (urgent) to 1 (not urgent)
+    const ratio = Math.max(0, Math.min(1, diff / oneDay))
 
     if (isDark) {
-      // Dark Mode: From Yellow-900 (hsl(40, 80%, 20%)) to Red-900 (hsl(0, 80%, 20%))
-      const hue = ratio * 40 // 0 to 40
+      const hue = ratio * 40
       return `hsl(${hue}, 90%, 20%)`
     } else {
-      // Light Mode: From Yellow-50 (hsl(50, 90%, 95%)) to Red-200 (hsl(0, 90%, 85%))
-      const hue = ratio * 50 // 0 to 50
-      const lightness = 85 + ratio * 10 // 85 (at 0) to 95 (at 1)
+      const hue = ratio * 50
+      const lightness = 85 + ratio * 10
       return `hsl(${hue}, 90%, ${lightness}%)`
     }
   }
 
-  return (
-    <div
-      className="min-h-screen w-full bg-white dark:bg-gray-900"
+  const AddTaskDialog = (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open)
+        if (!open) {
+          setEditingTask(null)
+          setDeadlineType('date')
+          setRemainingDays('')
+          setRemainingHours('')
+          setRemainingMinutes('')
+          setRemainingError('')
+        }
+      }}
     >
-      <div className="container mx-auto p-4">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold dark:text-white">
-            Task Management
-          </h1>
-        </div>
-
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row">
-          <Dialog
-            open={isOpen}
-            onOpenChange={(open) => {
-              setIsOpen(open)
-              if (!open) {
-                setEditingTask(null)
-                setDeadlineType('date')
-                setRemainingDays('')
-                setRemainingHours('')
-                setRemainingMinutes('')
-              }
+      <DialogTrigger asChild>
+        <Button
+          className="w-full sm:w-auto"
+          onClick={() => {
+            setEditingTask({
+              id: 0,
+              name: '',
+              endDate: '',
+              endTime: '',
+              tags: [],
+              isDone: false,
+              important: false,
+            })
+            setRemainingDays('')
+            setRemainingHours('')
+            setRemainingMinutes('')
+            setRemainingError('')
+          }}
+        >
+          <PlusCircle className="mr-2 size-4" /> Add New Task
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {editingTask && editingTask.id !== 0 ? 'Edit Task' : 'Create New Task'}
+          </DialogTitle>
+          <DialogDescription />
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Task Name</Label>
+            <Input
+              id="name"
+              name="name"
+              value={editingTask?.name || ''}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter task name..."
+            />
+          </div>
+          <RadioGroup
+            defaultValue="date"
+            onValueChange={(value) => {
+              setDeadlineType(value as DeadlineType)
+              setRemainingError('')
             }}
           >
-            <DialogTrigger asChild>
-              <Button
-                className="w-full sm:w-auto"
-                onClick={() => {
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="date" id="date" />
+              <Label htmlFor="date">End Date</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="remaining" id="remaining" />
+              <Label htmlFor="remaining">Remaining Time</Label>
+            </div>
+          </RadioGroup>
+          {deadlineType === 'date' ? (
+            <>
+              <div>
+                <Label htmlFor="endDate">End Date</Label>
+                <Input
+                  id="endDate"
+                  name="endDate"
+                  type="date"
+                  value={editingTask?.endDate || ''}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="endTime">End Time</Label>
+                <Input
+                  id="endTime"
+                  name="endTime"
+                  type="time"
+                  value={editingTask?.endTime || ''}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex space-x-2">
+                <div className="flex-1">
+                  <Label htmlFor="remainingDays">Days</Label>
+                  <Input
+                    id="remainingDays"
+                    type="number"
+                    min="0"
+                    value={remainingDays}
+                    onChange={(e) => { setRemainingDays(e.target.value); setRemainingError('') }}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="remainingHours">Hours</Label>
+                  <Input
+                    id="remainingHours"
+                    type="number"
+                    min="0"
+                    max="23"
+                    value={remainingHours}
+                    onChange={(e) => { setRemainingHours(e.target.value); setRemainingError('') }}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="remainingMinutes">Minutes</Label>
+                  <Input
+                    id="remainingMinutes"
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={remainingMinutes}
+                    onChange={(e) => { setRemainingMinutes(e.target.value); setRemainingError('') }}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              {remainingError && (
+                <p className="flex items-center gap-1.5 text-sm text-destructive">
+                  <AlertCircle className="size-3.5 shrink-0" />
+                  {remainingError}
+                </p>
+              )}
+            </div>
+          )}
+          <div>
+            <Label htmlFor="tags">Tags (comma-separated)</Label>
+            <Input
+              id="tags"
+              name="tags"
+              value={editingTask?.tags.join(', ') || ''}
+              onChange={handleTagsChange}
+              placeholder="e.g., work, urgent"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="important"
+              checked={editingTask?.important || false}
+              onCheckedChange={(checked) => {
+                if (editingTask) {
                   setEditingTask({
-                    id: 0,
-                    name: '',
-                    endDate: '',
-                    endTime: '',
-                    tags: [],
-                    isDone: false,
-                    important: false,
+                    ...editingTask,
+                    important: checked as boolean,
                   })
-                  setRemainingDays('')
-                  setRemainingHours('')
-                  setRemainingMinutes('')
-                }}
-              >
-                <PlusCircle className="mr-2 size-4" /> Add New Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="dark:bg-gray-800 dark:text-white">
-              <DialogHeader>
-                <DialogTitle className="dark:text-white">
-                  {editingTask && editingTask.id !== 0
-                    ? 'Edit Task'
-                    : 'Create New Task'}
-                </DialogTitle>
-                <DialogDescription />
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name" className="dark:text-gray-200">
-                    Task Name
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={editingTask?.name || ''}
-                    onChange={handleInputChange}
-                    required
-                    className="dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                <RadioGroup
-                  defaultValue="date"
-                  onValueChange={(value) =>
-                    setDeadlineType(value as DeadlineType)
-                  }
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="date" id="date" />
-                    <Label htmlFor="date">End Date</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="remaining" id="remaining" />
-                    <Label htmlFor="remaining">Remaining Time</Label>
-                  </div>
-                </RadioGroup>
-                {deadlineType === 'date' ? (
-                  <>
-                    <div>
-                      <Label htmlFor="endDate" className="dark:text-gray-200">
-                        End Date
-                      </Label>
-                      <Input
-                        id="endDate"
-                        name="endDate"
-                        type="date"
-                        value={editingTask?.endDate || ''}
-                        onChange={handleInputChange}
-                        required
-                        className="dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="endTime" className="dark:text-gray-200">
-                        End Time
-                      </Label>
-                      <Input
-                        id="endTime"
-                        name="endTime"
-                        type="time"
-                        value={editingTask?.endTime || ''}
-                        onChange={handleInputChange}
-                        required
-                        className="dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex space-x-2">
-                    <div>
-                      <Label
-                        htmlFor="remainingDays"
-                        className="dark:text-gray-200"
-                      >
-                        Days
-                      </Label>
-                      <Input
-                        id="remainingDays"
-                        type="number"
-                        min="0"
-                        value={remainingDays}
-                        onChange={(e) => setRemainingDays(e.target.value)}
-                        className="dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="remainingHours"
-                        className="dark:text-gray-200"
-                      >
-                        Hours
-                      </Label>
-                      <Input
-                        id="remainingHours"
-                        type="number"
-                        min="0"
-                        max="23"
-                        value={remainingHours}
-                        onChange={(e) => setRemainingHours(e.target.value)}
-                        className="dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="remainingMinutes"
-                        className="dark:text-gray-200"
-                      >
-                        Minutes
-                      </Label>
-                      <Input
-                        id="remainingMinutes"
-                        type="number"
-                        min="0"
-                        max="59"
-                        value={remainingMinutes}
-                        onChange={(e) => setRemainingMinutes(e.target.value)}
-                        className="dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <Label htmlFor="tags" className="dark:text-gray-200">
-                    Tags (comma-separated)
-                  </Label>
-                  <Input
-                    id="tags"
-                    name="tags"
-                    value={editingTask?.tags.join(', ') || ''}
-                    onChange={handleTagsChange}
-                    className="dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="important"
-                    checked={editingTask?.important || false}
-                    onCheckedChange={(checked) => {
-                      if (editingTask?.id) {
-                        setEditingTask({
-                          ...editingTask,
-                          ...{ important: checked as boolean },
-                        })
-                      }
-                    }}
-                  />
-                  <Label htmlFor="important" className="dark:text-gray-200">
-                    IMPORTANT
-                  </Label>
-                </div>
-                <Button type="submit">
-                  {editingTask && editingTask.id !== 0
-                    ? 'Update Task'
-                    : 'Create Task'}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+                }
+              }}
+            />
+            <Label htmlFor="important" className="font-medium cursor-pointer">
+              Mark as Important
+            </Label>
+          </div>
+          <Button type="submit" className="w-full">
+            {editingTask && editingTask.id !== 0 ? 'Update Task' : 'Create Task'}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+
+  return (
+    <div className="min-h-[calc(100vh-3rem)] w-full bg-background">
+      <div className="container mx-auto p-4 md:p-6">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Task Management</h1>
+        </div>
+
+        {/* Controls */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+          {AddTaskDialog}
 
           <div className="flex w-full flex-col gap-4 sm:flex-row">
             <div className="flex w-full items-center sm:w-[250px]">
-              <Filter className="mr-2 size-4 shrink-0" />
+              <Filter className="mr-2 size-4 shrink-0 text-muted-foreground" />
               <Select
                 onValueChange={(value) =>
                   setFilterTag(value === 'all' ? null : value)
@@ -491,6 +465,38 @@ export default function Component() {
           </div>
         </div>
 
+        {/* Empty State */}
+        {filteredAndSortedTasks.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/60">
+              <CheckSquare className="size-10 text-muted-foreground/40" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-lg font-semibold text-foreground">
+                {filterTag ? 'No tasks with this tag' : 'No tasks yet'}
+              </p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                {filterTag
+                  ? `No tasks found for tag "${filterTag}". Try a different filter.`
+                  : 'Create your first task to start tracking your productivity.'}
+              </p>
+            </div>
+            {!filterTag && (
+              <Button
+                onClick={() => {
+                  setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, important: false })
+                  setIsOpen(true)
+                }}
+                className="mt-2"
+              >
+                <PlusCircle className="mr-2 size-4" />
+                Create first task
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Task Grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredAndSortedTasks.map((task) => {
             const { days, hours, minutes, isLessThanOneDay, isOverdue, diffInMs } =
@@ -503,42 +509,35 @@ export default function Component() {
             return (
               <div
                 key={task.id}
-                className={`flex cursor-pointer flex-col rounded-lg border p-4 ${
+                className={`flex cursor-pointer flex-col rounded-xl border p-4 transition-all duration-150 hover:shadow-md ${
                   task.isDone
-                    ? 'bg-muted dark:bg-gray-800'
+                    ? 'bg-muted/50 opacity-70'
                     : task.important
                       ? isLessThanOneDay
-                        ? '' // Style handled by dynamicBg
-                        : 'bg-yellow-50 dark:bg-yellow-900'
-                      : 'dark:bg-gray-700'
+                        ? ''
+                        : 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
+                      : 'bg-card'
                 }`}
-                style={
-                  dynamicBg
-                    ? { backgroundColor: dynamicBg }
-                    : undefined
-                }
+                style={dynamicBg ? { backgroundColor: dynamicBg } : undefined}
                 onClick={() => editTask(task)}
               >
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id={`task-${task.id}`}
                     checked={task.isDone}
-                    onCheckedChange={() => {
-                      toggleTaskDone(task.id)
-                    }}
+                    onCheckedChange={() => toggleTaskDone(task.id)}
                     className="mt-1"
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h2
-                        className={`break-words text-lg ${task.important ? 'font-bold' : 'font-semibold'} ${
-                          task.isDone ? 'line-through' : ''
+                        className={`break-words text-base ${task.important ? 'font-bold' : 'font-semibold'} ${
+                          task.isDone ? 'line-through text-muted-foreground' : ''
                         } ${
-                          task.important && isLessThanOneDay
+                          !task.isDone && (task.important && isLessThanOneDay || isOverdue)
                             ? 'text-red-500 dark:text-red-400'
-                            : isOverdue
-                              ? 'text-red-500 dark:text-red-400'
-                              : 'dark:text-white'
+                            : ''
                         }`}
                       >
                         {task.name}
@@ -546,11 +545,11 @@ export default function Component() {
                       {task.important && (
                         <Badge variant="destructive" className="text-xs">
                           <AlertCircle className="mr-1 size-3" />
-                          IMPORTANT
+                          Important
                         </Badge>
                       )}
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {task.tags.map((tag, index) => (
                         <Badge
                           key={index}
@@ -559,7 +558,7 @@ export default function Component() {
                             color: stringToColor(tag, isDark),
                             borderColor: stringToColor(tag, isDark),
                           }}
-                          className="hover:bg-current/10 px-3 py-1 text-sm font-semibold transition-colors"
+                          className="px-2 py-0.5 text-xs font-medium"
                         >
                           {tag}
                         </Badge>
@@ -568,53 +567,50 @@ export default function Component() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                  <div className="flex flex-col gap-1">
+                <div className="mt-3 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                  <div className="flex flex-col gap-0.5">
                     <p
-                      className={`text-sm ${
-                        task.important ? 'font-semibold' : ''
-                      } ${
+                      className={`text-sm font-medium ${
                         isLessThanOneDay || isOverdue
                           ? 'text-red-500 dark:text-red-400'
-                          : 'text-muted-foreground dark:text-gray-300'
+                          : 'text-muted-foreground'
                       }`}
                     >
                       {isOverdue
-                        ? <span className="font-bold">Overdue</span>
+                        ? <span className="font-bold">⚠ Overdue</span>
                         : days > 0
                           ? `${days}d ${hours}h ${minutes}m left`
                           : `${hours}h ${minutes}m left`}
                     </p>
-                    <p className="text-muted-foreground text-xs dark:text-gray-400">
-                      End: {task.endDate} at {task.endTime}
+                    <p className="text-muted-foreground text-xs">
+                      Due: {task.endDate} at {task.endTime}
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setTaskToDelete(task.id)
-                        setIsDeleteDialogOpen(true)
-                      }}
-                    >
-                      <Trash className="size-4" color="#f87171" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setTaskToDelete(task.id)
+                      setIsDeleteDialogOpen(true)
+                    }}
+                  >
+                    <Trash className="size-3.5" />
+                  </Button>
                 </div>
               </div>
             )
           })}
         </div>
 
+        {/* Delete Confirmation */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent className="dark:bg-gray-800 dark:text-white">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription className="dark:text-gray-300">
-                Are you sure you want to delete this task? This action cannot be
-                undone.
+              <DialogTitle>Delete Task?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. The task will be permanently removed.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -627,7 +623,6 @@ export default function Component() {
               <Button
                 variant="destructive"
                 onClick={() => taskToDelete && deleteTask(taskToDelete)}
-                className="dark:bg-red-600 dark:hover:bg-red-700"
               >
                 Delete
               </Button>
