@@ -509,14 +509,14 @@ export default function Component() {
             return (
               <div
                 key={task.id}
-                className={`flex cursor-pointer flex-col rounded-xl border p-4 transition-all duration-150 hover:shadow-md ${
+                className={`flex cursor-pointer flex-col rounded-xl border p-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
                   task.isDone
-                    ? 'bg-muted/50 opacity-70'
+                    ? 'bg-muted/40 opacity-60 border-transparent'
                     : task.important
                       ? isLessThanOneDay
-                        ? ''
-                        : 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50'
-                      : 'bg-card'
+                        ? 'border-transparent shadow-md'
+                        : 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40 shadow-sm shadow-amber-500/5'
+                      : 'bg-card hover:border-primary/30 shadow-sm'
                 }`}
                 style={dynamicBg ? { backgroundColor: dynamicBg } : undefined}
                 onClick={() => editTask(task)}
