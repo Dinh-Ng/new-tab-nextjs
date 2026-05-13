@@ -46,7 +46,7 @@ const stringToColor = (str: string, isDark: boolean) => {
   }
   const hue = hash % 360
   return isDark
-    ? `hsl(${hue}, 80%, 75%)`
+    ? `hsl(${hue}, 50%, 70%)`
     : `hsl(${hue}, 70%, 45%)`
 }
 
@@ -237,14 +237,16 @@ export default function Component() {
   )
 
   const getUrgencyColor = (diff: number, isDark: boolean) => {
+    if (diff < 0) return isDark ? 'hsl(0, 70%, 50%)' : 'hsl(0, 90%, 45%)'
+
     const oneDay = 24 * 60 * 60 * 1000
     const ratio = Math.max(0, Math.min(1, diff / oneDay))
 
     if (isDark) {
-      const hue = ratio * 40
-      return `hsl(${hue}, 90%, 20%)`
+      const hue = 40 + ratio * 20
+      return `hsl(${hue}, 80%, 45%)`
     } else {
-      const hue = ratio * 50
+      const hue = 45 + ratio * 15
       const lightness = 85 + ratio * 10
       return `hsl(${hue}, 90%, ${lightness}%)`
     }
@@ -501,24 +503,28 @@ export default function Component() {
           {filteredAndSortedTasks.map((task) => {
             const { days, hours, minutes, isLessThanOneDay, isOverdue, diffInMs } =
               calculateTimeLeft(task.endDate, task.endTime)
-            const dynamicBg =
-              task.important && isLessThanOneDay && !task.isDone
-                ? getUrgencyColor(diffInMs, isDark)
-                : undefined
+            const urgencyColor = !task.isDone && (isLessThanOneDay || isOverdue)
+              ? getUrgencyColor(diffInMs, isDark)
+              : undefined
+
+            const importantColor = !task.isDone && task.important
+              ? (isDark ? 'hsla(45, 100%, 50%, 0.4)' : 'rgba(245, 158, 11, 0.4)')
+              : undefined
 
             return (
               <div
                 key={task.id}
-                className={`flex cursor-pointer flex-col rounded-xl border p-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+                className={`flex cursor-pointer flex-col rounded-xl border p-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
                   task.isDone
-                    ? 'bg-muted/40 opacity-60 border-transparent'
+                    ? 'bg-muted/20 opacity-50 border-transparent shadow-none'
                     : task.important
-                      ? isLessThanOneDay
-                        ? 'border-transparent shadow-md'
-                        : 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40 shadow-sm shadow-amber-500/5'
-                      : 'bg-card hover:border-primary/30 shadow-sm'
+                      ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40 shadow-sm'
+                      : 'bg-card shadow-sm'
                 }`}
-                style={dynamicBg ? { backgroundColor: dynamicBg } : undefined}
+                style={!task.isDone ? {
+                  borderColor: urgencyColor ? urgencyColor.replace('hsl', 'hsla').replace(')', ', 0.5)') : importantColor,
+                  boxShadow: urgencyColor ? `0 0 20px -12px ${urgencyColor.replace('hsl', 'hsla').replace(')', ', 0.3)')}` : (importantColor ? `0 0 20px -12px ${importantColor}` : undefined)
+                } : undefined}
                 onClick={() => editTask(task)}
               >
                 <div className="flex items-start gap-3">
@@ -533,18 +539,20 @@ export default function Component() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2
                         className={`break-words text-base ${task.important ? 'font-bold' : 'font-semibold'} ${
-                          task.isDone ? 'line-through text-muted-foreground' : ''
+                          task.isDone ? 'line-through text-muted-foreground/60' : ''
                         } ${
-                          !task.isDone && (task.important && isLessThanOneDay || isOverdue)
-                            ? 'text-red-500 dark:text-red-400'
-                            : ''
+                          !task.isDone && isOverdue
+                            ? 'text-red-500 dark:text-red-400/90'
+                            : !task.isDone && isLessThanOneDay
+                              ? 'text-amber-600 dark:text-amber-400/90'
+                              : ''
                         }`}
                       >
                         {task.name}
                       </h2>
                       {task.important && (
-                        <Badge variant="destructive" className="text-xs">
-                          <AlertCircle className="mr-1 size-3" />
+                        <Badge variant="outline" className="text-[10px] uppercase tracking-wider bg-amber-500/10 text-amber-500 border-amber-500/20 py-0 h-5">
+                          <AlertCircle className="mr-1 size-2.5" />
                           Important
                         </Badge>
                       )}
@@ -571,9 +579,11 @@ export default function Component() {
                   <div className="flex flex-col gap-0.5">
                     <p
                       className={`text-sm font-medium ${
-                        isLessThanOneDay || isOverdue
-                          ? 'text-red-500 dark:text-red-400'
-                          : 'text-muted-foreground'
+                        isOverdue
+                          ? 'text-red-500/90 dark:text-red-400/80'
+                          : isLessThanOneDay
+                            ? 'text-amber-600 dark:text-amber-400/80'
+                            : 'text-muted-foreground/80'
                       }`}
                     >
                       {isOverdue
