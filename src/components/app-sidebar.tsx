@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Book, ListTodo, Gamepad2, Moon, Sun, Target, Zap } from 'lucide-react'
+import { ListTodo, Gamepad2, Moon, Sun, Target, Zap } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 import {
@@ -22,12 +22,7 @@ const items = [
     icon: ListTodo,
     description: 'Manage your tasks',
   },
-  {
-    title: 'Story Reader',
-    url: '/story-reader',
-    icon: Book,
-    description: 'Read your stories',
-  },
+
   {
     title: 'Game Center',
     url: '/game',

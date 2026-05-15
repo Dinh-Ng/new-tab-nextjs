@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, CheckSquare, ArrowRight, Gamepad2, Target } from 'lucide-react'
+import { CheckSquare, ArrowRight, Gamepad2, Target } from 'lucide-react'
 import { TopSites } from '@/components/top-sites'
 import { ClockGreeting } from '@/components/clock-greeting'
 
@@ -14,16 +14,7 @@ import {
 
 export default function Home() {
   const apps = [
-    {
-      title: 'Story Reader',
-      description: 'Track and read your favorite stories.',
-      icon: BookOpen,
-      href: '/story-reader',
-      color: 'text-indigo-500',
-      bg: 'bg-indigo-50 dark:bg-indigo-950/40',
-      ring: 'ring-indigo-200 dark:ring-indigo-800/50',
-      shadow: 'hover:shadow-indigo-100 dark:hover:shadow-indigo-900/20',
-    },
+
     {
       title: 'Task Manager',
       description: 'Manage your daily tasks and productivity.',
