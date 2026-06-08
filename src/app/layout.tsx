@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Link from 'next/link'
 
 import './globals.css'
 
@@ -38,9 +39,12 @@ export default async function RootLayout({
               <header className="sticky top-0 z-40 flex items-center h-12 px-3 border-b bg-background/80 backdrop-blur-sm gap-2 shrink-0">
                 <SidebarTrigger className="h-8 w-8" />
                 <div className="h-4 w-px bg-border" />
-                <span className="text-sm text-muted-foreground font-medium tracking-tight select-none">
+                <Link
+                  href="/"
+                  className="text-sm text-muted-foreground font-medium tracking-tight select-none hover:text-foreground transition-colors"
+                >
                   NexTab
-                </span>
+                </Link>
               </header>
               <div className="flex-1">
                 {children}

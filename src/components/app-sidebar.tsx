@@ -45,7 +45,7 @@ export function AppSidebar() {
     <Sidebar className="sidebar-premium border-r-0">
       {/* Header */}
       <SidebarHeader className="sidebar-header px-4 py-5">
-        <div className="sidebar-brand">
+        <Link href="/" className="sidebar-brand" style={{ textDecoration: 'none' }}>
           <div className="sidebar-logo">
             <Zap className="sidebar-logo-icon" />
           </div>
@@ -53,7 +53,7 @@ export function AppSidebar() {
             <span className="sidebar-brand-name">NexTab</span>
             <span className="sidebar-brand-tagline">Your personal hub</span>
           </div>
-        </div>
+        </Link>
       </SidebarHeader>
 
       {/* Navigation */}
