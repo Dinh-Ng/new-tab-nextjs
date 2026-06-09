@@ -1,27 +1,23 @@
 'use client'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+
+const ROUTE_TITLES: Record<string, string> = {
+  '/': 'New Tab',
+  '/task-manager': 'Task Manager',
+  '/game': 'Game Center',
+  '/game/2048': '2048',
+  '/game/block-puzzle': 'Block Puzzle',
+  '/daily-quests': 'Daily Quests',
+}
 
 export default function DynamicTitle() {
-  const [title, setTitle] = useState('New Tab')
   const pathname = usePathname()
 
   useEffect(() => {
-    if (pathname.startsWith('/game')) {
-      setTitle('Game')
-      return
-    }
-
-    switch (pathname) {
-      case '/task-manager':
-        setTitle('Task manager')
-        break
-
-      default:
-        setTitle('New Tab')
-        break
-    }
+    const title = ROUTE_TITLES[pathname] ?? 'NexTab'
+    document.title = title
   }, [pathname])
 
-  return <title>{title}</title>
+  return null
 }

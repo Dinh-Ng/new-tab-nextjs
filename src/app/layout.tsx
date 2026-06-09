@@ -14,7 +14,6 @@ import { ThemeProvider } from '@/components/theme-provider'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'NexTab — Your Personal Hub',
   description: 'A personal productivity dashboard for your new tab.',
 }
 
