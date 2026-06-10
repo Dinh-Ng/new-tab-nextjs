@@ -127,6 +127,25 @@ export default function BlockPuzzleGame() {
   const [selectedBlockIdx, setSelectedBlockIdx] = useState<number | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
 
+  // Animation state: set of "row:r" or "col:c" keys that are currently flashing
+  const [clearingCells, setClearingCells] = useState<Set<string>>(new Set())
+  // Track pressed queue block index for shadow effect
+  const [pressedBlockIdx, setPressedBlockIdx] = useState<number | null>(null)
+
+  const fillQueue = useCallback(() => {
+    setQueue([getRandomBlock(), getRandomBlock(), getRandomBlock()])
+  }, [])
+
+  const startNewGame = useCallback(() => {
+    setGrid(createEmptyGrid())
+    setScore(0)
+    setGameOver(false)
+    setSelectedBlockIdx(null)
+    setClearingCells(new Set())
+    setQueue([getRandomBlock(), getRandomBlock(), getRandomBlock()])
+    localStorage.removeItem('block-puzzle-state')
+  }, [])
+
   // Initialization & Persistence
   useEffect(() => {
     // Load high score
@@ -181,19 +200,6 @@ export default function BlockPuzzleGame() {
     }
   }, [score, highScore])
 
-  const startNewGame = () => {
-    setGrid(createEmptyGrid())
-    setScore(0)
-    setGameOver(false)
-    setSelectedBlockIdx(null)
-    fillQueue()
-    localStorage.removeItem('block-puzzle-state')
-  }
-
-  const fillQueue = useCallback(() => {
-    setQueue([getRandomBlock(), getRandomBlock(), getRandomBlock()])
-  }, [])
-
   // --- Game Logic ---
 
   const checkPlacement = (r: number, c: number, shape: BlockShape): boolean => {
@@ -233,13 +239,6 @@ export default function BlockPuzzleGame() {
     if (queue.some((b) => b !== null)) {
       // Check if ANY remaining block can be placed
       const activeBlocks = queue.filter((b) => b !== null) as Block[]
-      // Optimization: if we have blocks, we check.
-      // If NO block can be placed anywhere, it's game over.
-      // Note: This needs to consider rotation if we allow rotation BEFORE check.
-      // Assuming current rotation state. If we allow rotation in queue, user can try rotating.
-      // So strict "Game Over" is hard if rotation is allowed.
-      // We will just check basic placement for now.
-      // A robust check would try all 4 rotations for each block.
 
       let possible = false
       // Check all blocks in queue
@@ -309,21 +308,46 @@ export default function BlockPuzzleGame() {
     }
 
     if (linesToClear.length > 0) {
-      // Clear lines
+      // Build the set of cell keys that are clearing
+      const flashKeys = new Set<string>()
       linesToClear.forEach((line) => {
         if (line.type === 'row') {
-          for (let c = 0; c < GRID_SIZE; c++) newGrid[line.index][c] = null
+          for (let col = 0; col < GRID_SIZE; col++) {
+            flashKeys.add(`${line.index}-${col}`)
+          }
         } else {
-          for (let r = 0; r < GRID_SIZE; r++) newGrid[r][line.index] = null
+          for (let row = 0; row < GRID_SIZE; row++) {
+            flashKeys.add(`${row}-${line.index}`)
+          }
         }
       })
+
+      // Flash animation: show clearing state briefly, then wipe grid
+      setClearingCells(flashKeys)
+      setTimeout(() => {
+        const clearedGrid = newGrid.map((row) => [...row])
+        linesToClear.forEach((line) => {
+          if (line.type === 'row') {
+            for (let col = 0; col < GRID_SIZE; col++) clearedGrid[line.index][col] = null
+          } else {
+            for (let row = 0; row < GRID_SIZE; row++) clearedGrid[row][line.index] = null
+          }
+        })
+        setGrid(clearedGrid)
+        setClearingCells(new Set())
+      }, 300)
+
       // Combo score: 1 line = 10, 2 = 30, 3 = 60, etc. (triangular * 10)
       const n = linesToClear.length
       points += ((n * (n + 1)) / 2) * 10
+
+      // Update grid immediately (so filled shows before clear)
+      setGrid(newGrid)
+    } else {
+      setGrid(newGrid)
     }
 
     setScore((s) => s + points)
-    setGrid(newGrid)
 
     // 4. Update Queue
     const newQueue = [...queue]
@@ -364,199 +388,229 @@ export default function BlockPuzzleGame() {
   if (!isInitialized) return null
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center bg-stone-100 p-4 dark:bg-stone-950">
-      {/* Header */}
-      <div className="flex w-full max-w-md items-center justify-between pb-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          asChild
-          className="text-stone-700 dark:text-stone-300"
-        >
-          <Link href="/game">
-            <ArrowLeft className="size-6" />
-          </Link>
-        </Button>
-        <div className="flex flex-col items-center">
-          <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-200">
-            Wood Block
-          </h1>
-        </div>
-        <div className="flex gap-2">
+    <>
+      {/* Keyframes for the row-clear flash animation */}
+      <style>{`
+        @keyframes cell-clear-flash {
+          0%   { opacity: 1; transform: scale(1); background-color: #fbbf24; box-shadow: 0 0 12px 4px rgba(251,191,36,0.7); }
+          40%  { opacity: 1; transform: scale(1.12); background-color: #fef08a; box-shadow: 0 0 20px 8px rgba(254,240,138,0.9); }
+          70%  { opacity: 0.6; transform: scale(0.95); background-color: #f59e0b; }
+          100% { opacity: 0; transform: scale(0.7); }
+        }
+        .cell-clearing {
+          animation: cell-clear-flash 0.3s ease-out forwards;
+          z-index: 10;
+        }
+      `}</style>
+      <div className="flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center bg-stone-100 p-4 dark:bg-stone-950">
+        {/* Header */}
+        <div className="flex w-full max-w-md items-center justify-between pb-6">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            onClick={startNewGame}
-            aria-label="New Game"
-            className="border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300"
+            asChild
+            className="text-stone-700 dark:text-stone-300"
           >
-            <RotateCcw className="size-5" />
+            <Link href="/game">
+              <ArrowLeft className="size-6" />
+            </Link>
           </Button>
-        </div>
-      </div>
-
-      {/* Score Board */}
-      <div className="mb-6 flex w-full max-w-md gap-4">
-        <div className="flex flex-1 items-center justify-between rounded-xl bg-orange-100 p-4 shadow-inner ring-1 ring-orange-200 dark:bg-orange-950/30 dark:ring-orange-900">
-          <div className="flex items-center gap-2">
-            <Trophy className="size-5 text-orange-600 dark:text-orange-500" />
-            <span className="text-sm font-bold uppercase text-orange-800 dark:text-orange-400">
-              Score
-            </span>
+          <div className="flex flex-col items-center">
+            <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-200">
+              Block Puzzle
+            </h1>
           </div>
-          <span className="text-2xl font-black text-orange-900 dark:text-orange-100">
-            {score}
-          </span>
-        </div>
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl bg-stone-200 p-2 shadow-inner dark:bg-stone-900">
-          <span className="text-xs font-bold uppercase text-stone-500">
-            Best
-          </span>
-          <span className="text-lg font-bold text-stone-700 dark:text-stone-300">
-            {highScore}
-          </span>
-        </div>
-      </div>
-
-      {/* Game Board Container */}
-      <div className="relative rounded-lg bg-[#e3d5c5] p-3 shadow-2xl ring-4 ring-[#d4c5b5] dark:bg-[#2a2622] dark:ring-[#3d3630]">
-        {gameOver && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 rounded-lg bg-black/60 backdrop-blur-sm">
-            <h2 className="text-4xl font-black text-white drop-shadow-lg">
-              Game Over!
-            </h2>
-            <div className="text-2xl font-bold text-orange-200">
-              Score: {score}
-            </div>
+          <div className="flex gap-2">
             <Button
-              size="lg"
+              variant="outline"
+              size="icon"
               onClick={startNewGame}
-              className="bg-orange-600 font-bold text-white hover:bg-orange-700"
+              aria-label="New Game"
+              className="border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300"
             >
-              Try Again
+              <RotateCcw className="size-5" />
             </Button>
           </div>
-        )}
-
-        {/* Grid */}
-        <div
-          className="grid gap-1 bg-[#d4c5b5] p-1 dark:bg-[#3d3630]"
-          style={{
-            gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
-            width: 'min(85vw, 400px)',
-            height: 'min(85vw, 400px)',
-          }}
-          onMouseLeave={() => setHoverPos(null)}
-        >
-          {grid.map((row, r) =>
-            row.map((cell, c) => {
-              // Determine cell appearance
-              const isFilled = cell !== null
-              const isGhost =
-                hoverPos &&
-                selectedBlockIdx !== null &&
-                queue[selectedBlockIdx] !== null &&
-                checkPlacement(
-                  hoverPos.r,
-                  hoverPos.c,
-                  queue[selectedBlockIdx]!.shape
-                ) &&
-                r >= hoverPos.r &&
-                r < hoverPos.r + queue[selectedBlockIdx]!.shape.length &&
-                c >= hoverPos.c &&
-                c < hoverPos.c + queue[selectedBlockIdx]!.shape[0].length &&
-                queue[selectedBlockIdx]!.shape[r - hoverPos.r][
-                  c - hoverPos.c
-                ] === 1
-
-              return (
-                <div
-                  key={`${r}-${c}`}
-                  className={`
-                    relative flex size-full items-center justify-center rounded-sm transition-all duration-150
-                    ${
-                      isFilled
-                        ? 'bg-amber-700 bg-[url("https://www.transparenttextures.com/patterns/wood-pattern.png")] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.3),inset_0_1px_2px_rgba(255,255,255,0.2)]'
-                        : 'bg-[#cfc0b0] shadow-inner dark:bg-[#332f2a]'
-                    }
-                      ${isGhost && !isFilled ? 'bg-amber-700/50' : ''}
-                   `}
-                  onClick={() => placeBlock(r, c)}
-                  onMouseEnter={() => setHoverPos({ r, c })}
-                >
-                  {/* Optional: Innerbevel for wood look */}
-                  {isFilled && (
-                    <div className="absolute inset-1 rounded-sm border border-white/10" />
-                  )}
-                </div>
-              )
-            })
-          )}
         </div>
-      </div>
 
-      {/* Controls: Reset/Powerups */}
-      <div className="mt-8 flex w-full max-w-md items-center justify-between px-4">
-        <span className="text-xs font-medium text-stone-500">
-          Tap shape to select/rotate
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`gap-2 ${score >= 100 ? 'text-amber-700 dark:text-amber-500' : 'text-stone-400'}`}
-          disabled={score < 100}
-          onClick={swapBlocks}
-        >
-          <RefreshCw className={`size-4 ${score >= 100 ? '' : 'opacity-50'}`} />
-          <span className="font-bold">100</span>
-        </Button>
-      </div>
+        {/* Score Board */}
+        <div className="mb-6 flex w-full max-w-md gap-4">
+          <div className="flex flex-1 items-center justify-between rounded-xl bg-orange-100 p-4 shadow-inner ring-1 ring-orange-200 dark:bg-orange-950/30 dark:ring-orange-900">
+            <div className="flex items-center gap-2">
+              <Trophy className="size-5 text-orange-600 dark:text-orange-500" />
+              <span className="text-sm font-bold uppercase text-orange-800 dark:text-orange-400">
+                Score
+              </span>
+            </div>
+            <span className="text-2xl font-black text-orange-900 dark:text-orange-100">
+              {score}
+            </span>
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center rounded-xl bg-stone-200 p-2 shadow-inner dark:bg-stone-900">
+            <span className="text-xs font-bold uppercase text-stone-500">
+              Best
+            </span>
+            <span className="text-lg font-bold text-stone-700 dark:text-stone-300">
+              {highScore}
+            </span>
+          </div>
+        </div>
 
-      {/* Block Queue */}
-      <div className="mt-4 flex h-32 w-full max-w-md items-center justify-center gap-6">
-        {queue.map((block, idx) => (
-          <div
-            key={idx}
-            className={`
-              relative flex size-24 cursor-pointer items-center justify-center rounded-xl transition-all
-              ${
-                selectedBlockIdx === idx
-                  ? 'bg-amber-100 ring-2 ring-amber-500 dark:bg-amber-900/40'
-                  : 'bg-transparent hover:bg-stone-200 dark:hover:bg-stone-800'
-              }
-              ${block === null ? 'invisible' : ''}
-            `}
-            onClick={(e) => {
-              if (gameOver) return
-              if (selectedBlockIdx === idx) {
-                rotateBlockInQueue(idx, e)
-              } else {
-                setSelectedBlockIdx(idx)
-              }
-            }}
-          >
-            {block && (
-              <div
-                className="grid gap-[2px]"
-                style={{
-                  gridTemplateColumns: `repeat(${block.shape[0].length}, 1fr)`,
-                  // Scale down for preview
-                  transform: 'scale(0.6)',
-                }}
-              >
-                {block.shape.map((row, br) =>
-                  row.map((cell, bc) => (
-                    <div
-                      key={`${br}-${bc}`}
-                      className={`size-8 rounded-sm ${cell ? 'bg-amber-700 shadow-sm' : 'bg-transparent'}`}
-                    />
-                  ))
-                )}
+        {/* Game Board Container */}
+        <div className="relative rounded-lg bg-[#e3d5c5] p-3 shadow-2xl ring-4 ring-[#d4c5b5] dark:bg-[#2a2622] dark:ring-[#3d3630]">
+          {gameOver && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 rounded-lg bg-black/60 backdrop-blur-sm">
+              <h2 className="text-4xl font-black text-white drop-shadow-lg">
+                Game Over!
+              </h2>
+              <div className="text-2xl font-bold text-orange-200">
+                Score: {score}
               </div>
+              <Button
+                size="lg"
+                onClick={startNewGame}
+                className="bg-orange-600 font-bold text-white hover:bg-orange-700"
+              >
+                Try Again
+              </Button>
+            </div>
+          )}
+
+          {/* Grid */}
+          <div
+            className="grid gap-1 bg-[#d4c5b5] p-1 dark:bg-[#3d3630]"
+            style={{
+              gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
+              width: 'min(85vw, 400px)',
+              height: 'min(85vw, 400px)',
+            }}
+            onMouseLeave={() => setHoverPos(null)}
+          >
+            {grid.map((row, r) =>
+              row.map((cell, c) => {
+                const cellKey = `${r}-${c}`
+                // Determine cell appearance
+                const isFilled = cell !== null
+                const isClearing = clearingCells.has(cellKey)
+                const isGhost =
+                  hoverPos &&
+                  selectedBlockIdx !== null &&
+                  queue[selectedBlockIdx] !== null &&
+                  checkPlacement(
+                    hoverPos.r,
+                    hoverPos.c,
+                    queue[selectedBlockIdx]!.shape
+                  ) &&
+                  r >= hoverPos.r &&
+                  r < hoverPos.r + queue[selectedBlockIdx]!.shape.length &&
+                  c >= hoverPos.c &&
+                  c < hoverPos.c + queue[selectedBlockIdx]!.shape[0].length &&
+                  queue[selectedBlockIdx]!.shape[r - hoverPos.r][
+                    c - hoverPos.c
+                  ] === 1
+
+                return (
+                  <div
+                    key={cellKey}
+                    className={`
+                      relative flex size-full items-center justify-center rounded-sm transition-all duration-150
+                      ${
+                        isFilled
+                          ? 'bg-amber-700 bg-[url("https://www.transparenttextures.com/patterns/wood-pattern.png")] shadow-[inset_0_-2px_4px_rgba(0,0,0,0.3),inset_0_1px_2px_rgba(255,255,255,0.2)]'
+                          : 'bg-[#cfc0b0] shadow-inner dark:bg-[#332f2a]'
+                      }
+                      ${isGhost && !isFilled ? 'bg-amber-700/50 shadow-[inset_0_-2px_4px_rgba(0,0,0,0.2),inset_0_1px_2px_rgba(255,255,255,0.15)] scale-95' : ''}
+                      ${isClearing ? 'cell-clearing' : ''}
+                     `}
+                    onClick={() => placeBlock(r, c)}
+                    onMouseEnter={() => setHoverPos({ r, c })}
+                  >
+                    {/* Optional: Innerbevel for wood look */}
+                    {isFilled && !isClearing && (
+                      <div className="absolute inset-1 rounded-sm border border-white/10" />
+                    )}
+                  </div>
+                )
+              })
             )}
           </div>
-        ))}
+        </div>
+
+        {/* Controls: Reset/Powerups */}
+        <div className="mt-8 flex w-full max-w-md items-center justify-between px-4">
+          <span className="text-xs font-medium text-stone-500">
+            Tap shape to select/rotate
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`gap-2 ${score >= 100 ? 'text-amber-700 dark:text-amber-500' : 'text-stone-400'}`}
+            disabled={score < 100}
+            onClick={swapBlocks}
+          >
+            <RefreshCw className={`size-4 ${score >= 100 ? '' : 'opacity-50'}`} />
+            <span className="font-bold">100</span>
+          </Button>
+        </div>
+
+        {/* Block Queue */}
+        <div className="mt-4 flex h-32 w-full max-w-md items-center justify-center gap-6">
+          {queue.map((block, idx) => {
+            const isSelected = selectedBlockIdx === idx
+            const isPressed = pressedBlockIdx === idx
+            return (
+              <div
+                key={idx}
+                className={`
+                  relative flex size-24 cursor-pointer items-center justify-center rounded-xl transition-all duration-150
+                  ${
+                    isSelected
+                      ? 'bg-amber-100 ring-2 ring-amber-500 shadow-[0_6px_18px_rgba(217,119,6,0.35)] -translate-y-1 dark:bg-amber-900/40'
+                      : 'bg-transparent hover:bg-stone-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 dark:hover:bg-stone-800 dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]'
+                  }
+                  ${isPressed && !isSelected ? 'scale-95 shadow-[0_1px_4px_rgba(0,0,0,0.2)]' : ''}
+                  ${block === null ? 'invisible' : ''}
+                `}
+                onClick={(e) => {
+                  if (gameOver) return
+                  if (selectedBlockIdx === idx) {
+                    rotateBlockInQueue(idx, e)
+                  } else {
+                    setSelectedBlockIdx(idx)
+                  }
+                }}
+                onMouseDown={() => setPressedBlockIdx(idx)}
+                onMouseUp={() => setPressedBlockIdx(null)}
+                onMouseLeave={() => setPressedBlockIdx(null)}
+              >
+                {block && (
+                  <div
+                    className="grid gap-[2px]"
+                    style={{
+                      gridTemplateColumns: `repeat(${block.shape[0].length}, 1fr)`,
+                      // Scale down for preview
+                      transform: 'scale(0.6)',
+                    }}
+                  >
+                    {block.shape.map((row, br) =>
+                      row.map((cell, bc) => (
+                        <div
+                          key={`${br}-${bc}`}
+                          className={`size-8 rounded-sm ${
+                            cell
+                              ? 'bg-amber-700 shadow-[inset_0_-2px_3px_rgba(0,0,0,0.3),inset_0_1px_2px_rgba(255,255,255,0.2)]'
+                              : 'bg-transparent'
+                          }`}
+                        />
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
