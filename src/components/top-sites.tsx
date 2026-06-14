@@ -27,6 +27,10 @@ export function TopSites() {
   
   const [form, setForm] = useState<{ id: string; name: string; url: string }>({ id: '', name: '', url: '' })
 
+  const dispatchStorageEvent = () => {
+    window.dispatchEvent(new CustomEvent('localStorageChanged'))
+  }
+
   useEffect(() => {
     const saved = localStorage.getItem('dashboard_shortcuts')
     if (saved) {
@@ -40,6 +44,7 @@ export function TopSites() {
 
   useEffect(() => {
     localStorage.setItem('dashboard_shortcuts', JSON.stringify(shortcuts))
+    dispatchStorageEvent()
   }, [shortcuts])
 
   const handleSave = (e: React.FormEvent) => {

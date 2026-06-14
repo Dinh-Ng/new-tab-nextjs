@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import { ListTodo, Gamepad2, Moon, Sun, Target, Zap } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
+import { GoogleDriveSync } from '@/components/google-drive-sync'
+
 import {
   Sidebar,
   SidebarContent,
@@ -85,6 +87,9 @@ export function AppSidebar() {
       {/* Footer */}
       <SidebarFooter className="px-4 py-4">
         <div className="sidebar-footer-divider" />
+        {/* Google Drive Sync */}
+        <GoogleDriveSync />
+        <div className="sidebar-footer-divider mt-3" />
         <div className="sidebar-footer-content">
           <div className="sidebar-version">
             <span className="sidebar-version-dot" />

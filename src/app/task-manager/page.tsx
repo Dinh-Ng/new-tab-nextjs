@@ -66,6 +66,10 @@ export default function Component() {
   const [remainingMinutes, setRemainingMinutes] = useState('')
   const [remainingError, setRemainingError] = useState('')
 
+  const dispatchStorageEvent = () => {
+    window.dispatchEvent(new CustomEvent('localStorageChanged'))
+  }
+
   useEffect(() => {
     const storedTasks = localStorage.getItem('tasks')
     if (storedTasks) {
@@ -77,6 +81,7 @@ export default function Component() {
     localStorage.setItem('tasks', JSON.stringify(tasks))
     const tags = Array.from(new Set(tasks.flatMap((task) => task.tags)))
     setAllTags(tags)
+    dispatchStorageEvent()
   }, [tasks])
 
   useEffect(() => {

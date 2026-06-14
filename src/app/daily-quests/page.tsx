@@ -44,6 +44,10 @@ export default function DailyQuestsPage() {
   const [gameForm, setGameForm] = useState<{ id: string, name: string, resetTime: string, weeklyResetDay: number }>({ id: '', name: '', resetTime: '00:00', weeklyResetDay: 1 })
   const [questForm, setQuestForm] = useState<{ id: string, name: string, frequency: 'daily' | 'weekly', isMultiStep: boolean, targetCount: number }>({ id: '', name: '', frequency: 'daily', isMultiStep: false, targetCount: 2 })
 
+  const dispatchStorageEvent = () => {
+    window.dispatchEvent(new CustomEvent('localStorageChanged'))
+  }
+
   // Loading
   useEffect(() => {
     const stored = localStorage.getItem('daily_quests_games')
@@ -122,6 +126,7 @@ export default function DailyQuestsPage() {
     } else {
       localStorage.removeItem('daily_quests_games')
     }
+    dispatchStorageEvent()
   }, [games])
 
   const saveGame = (e: React.FormEvent) => {
