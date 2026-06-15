@@ -125,9 +125,12 @@ export function useDriveSync(): DriveSync {
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
+  // NOTE: signIn must stay synchronous with the user's click event.
+  // Do NOT add any async awaits or setState calls before requestToken()
+  // or the browser will treat it as a programmatic popup and block it.
   const signIn = useCallback(() => {
     setErrorMessage(null)
-    requestToken()
+    requestToken() // must be called synchronously in the click handler
   }, [])
 
   const signOut = useCallback(() => {

@@ -89,8 +89,10 @@ export function initTokenClient(
   })
 }
 
-export function requestToken(prompt = ''): void {
-  tokenClient?.requestAccessToken({ prompt })
+export function requestToken(prompt?: string): void {
+  // Only pass prompt when explicitly set — an empty string behaves differently
+  // from omitting it and can force the popup flow in GIS.
+  tokenClient?.requestAccessToken(prompt ? { prompt } : {})
 }
 
 export function isTokenValid(): boolean {
