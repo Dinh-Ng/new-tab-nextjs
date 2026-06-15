@@ -1,6 +1,6 @@
 /**
  * Google Drive integration for NexTab
- * Uses Google Identity Services (GIS) token-based flow + Drive REST API
+ * Uses manual OAuth implicit redirect flow + Drive REST API
  * All data is stored in Drive's appDataFolder (private, only visible to this app)
  */
 
@@ -27,72 +27,68 @@ const SCOPES = 'https://www.googleapis.com/auth/drive.appdata'
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3'
 const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3'
 
-// ─── GIS Script Loader ───────────────────────────────────────────────────────
+/** sessionStorage key where the callback page writes the token */
+export const OAUTH_TOKEN_KEY = 'nextab_oauth_token'
+export const OAUTH_EXPIRES_KEY = 'nextab_oauth_expires'
 
-let gisLoaded = false
+// ─── Redirect-based OAuth ─────────────────────────────────────────────────────
 
-export function loadGISScript(): Promise<void> {
-  if (gisLoaded || typeof window === 'undefined') return Promise.resolve()
-  if (document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
-    gisLoaded = true
-    return Promise.resolve()
-  }
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.defer = true
-    script.onload = () => {
-      gisLoaded = true
-      resolve()
-    }
-    script.onerror = reject
-    document.head.appendChild(script)
+/** Returns the absolute callback URL registered in Google Cloud Console */
+function getRedirectUri(): string {
+  if (typeof window === 'undefined') return ''
+  return `${window.location.origin}/auth/callback`
+}
+
+/**
+ * Redirects the browser to Google's OAuth consent screen.
+ * The user is sent back to /auth/callback with the token in the URL hash.
+ */
+export function redirectToGoogleOAuth(clientId: string): void {
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: getRedirectUri(),
+    response_type: 'token',
+    scope: SCOPES,
+    include_granted_scopes: 'true',
+    prompt: 'select_account',
   })
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`
 }
 
-// ─── Token Client ────────────────────────────────────────────────────────────
+// ─── Token Management ─────────────────────────────────────────────────────────
 
-interface TokenResponse {
-  access_token: string
-  expires_in: number
-  error?: string
-}
-
-interface TokenClient {
-  requestAccessToken: (opts?: { prompt?: string }) => void
-}
-
-let tokenClient: TokenClient | null = null
 let currentToken: string | null = null
 let tokenExpiresAt = 0
 
-export function initTokenClient(
-  clientId: string,
-  onToken: (token: string) => void,
-  onError: (err: unknown) => void
-): void {
-  if (typeof window === 'undefined' || !window.google?.accounts?.oauth2) return
-
-  tokenClient = window.google.accounts.oauth2.initTokenClient({
-    client_id: clientId,
-    scope: SCOPES,
-    callback: (response: TokenResponse) => {
-      if (response.error) {
-        onError(response.error)
-        return
-      }
-      currentToken = response.access_token
-      tokenExpiresAt = Date.now() + (response.expires_in - 60) * 1000
-      onToken(response.access_token)
-    },
-  })
+/**
+ * Call this on app startup to restore a token previously saved by the
+ * OAuth callback page (stored in sessionStorage).
+ */
+export function restoreTokenFromSession(): boolean {
+  if (typeof window === 'undefined') return false
+  const token = sessionStorage.getItem(OAUTH_TOKEN_KEY)
+  const expires = sessionStorage.getItem(OAUTH_EXPIRES_KEY)
+  if (!token || !expires) return false
+  const expiresAt = parseInt(expires, 10)
+  if (Date.now() >= expiresAt) {
+    sessionStorage.removeItem(OAUTH_TOKEN_KEY)
+    sessionStorage.removeItem(OAUTH_EXPIRES_KEY)
+    return false
+  }
+  currentToken = token
+  tokenExpiresAt = expiresAt
+  return true
 }
 
-export function requestToken(prompt?: string): void {
-  // Only pass prompt when explicitly set — an empty string behaves differently
-  // from omitting it and can force the popup flow in GIS.
-  tokenClient?.requestAccessToken(prompt ? { prompt } : {})
+/**
+ * Called by the /auth/callback page after parsing the token from the URL hash.
+ */
+export function saveTokenToSession(accessToken: string, expiresIn: number): void {
+  const expiresAt = Date.now() + (expiresIn - 60) * 1000
+  sessionStorage.setItem(OAUTH_TOKEN_KEY, accessToken)
+  sessionStorage.setItem(OAUTH_EXPIRES_KEY, String(expiresAt))
+  currentToken = accessToken
+  tokenExpiresAt = expiresAt
 }
 
 export function isTokenValid(): boolean {
@@ -100,11 +96,12 @@ export function isTokenValid(): boolean {
 }
 
 export function clearToken(): void {
-  if (currentToken && typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
-    window.google.accounts.oauth2.revoke(currentToken, () => {})
-  }
   currentToken = null
   tokenExpiresAt = 0
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem(OAUTH_TOKEN_KEY)
+    sessionStorage.removeItem(OAUTH_EXPIRES_KEY)
+  }
 }
 
 function getAuthHeaders(): HeadersInit {
@@ -216,25 +213,6 @@ export function restoreToLocalStorage(backup: NexTabBackup): void {
     const value = backup[key as BackupKey]
     if (value !== null && value !== undefined) {
       localStorage.setItem(key, JSON.stringify(value))
-    }
-  }
-}
-
-// ─── Global type augment ─────────────────────────────────────────────────────
-
-declare global {
-  interface Window {
-    google: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (config: {
-            client_id: string
-            scope: string
-            callback: (response: TokenResponse) => void
-          }) => TokenClient
-          revoke: (token: string, callback: () => void) => void
-        }
-      }
     }
   }
 }

@@ -8,12 +8,11 @@ import {
   downloadBackup,
   fetchUserInfo,
   GoogleUserInfo,
-  initTokenClient,
   isTokenValid,
-  loadGISScript,
   NexTabBackup,
-  requestToken,
+  redirectToGoogleOAuth,
   restoreToLocalStorage,
+  restoreTokenFromSession,
   uploadBackup,
 } from '@/lib/google-drive'
 
@@ -51,7 +50,9 @@ export function useDriveSync(): DriveSync {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''
 
-  // ── Init GIS ──────────────────────────────────────────────────────────────
+  // ── Restore token from session on mount ───────────────────────────────────
+  // After the OAuth redirect, /auth/callback stores the token in sessionStorage.
+  // We pick it up here and restore the signed-in state.
 
   useEffect(() => {
     if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
@@ -59,33 +60,14 @@ export function useDriveSync(): DriveSync {
       return
     }
 
-    loadGISScript()
-      .then(() => {
-        initTokenClient(
-          clientId,
-          async (token) => {
-            if (!token) return
-            setIsSignedIn(true)
-            try {
-              const info = await fetchUserInfo()
-              setUserInfo(info)
-            } catch {
-              // user info is optional
-            }
-          },
-          (err) => {
-            console.error('Google OAuth error:', err)
-            setIsSignedIn(false)
-            setErrorMessage('Google sign-in failed.')
-          }
-        )
-      })
-      .catch((err) => {
-        console.error('Failed to load GIS script:', err)
-      })
-      .finally(() => {
-        setIsInitializing(false)
-      })
+    const hasToken = restoreTokenFromSession()
+    if (hasToken) {
+      setIsSignedIn(true)
+      fetchUserInfo()
+        .then((info) => setUserInfo(info))
+        .catch(() => {/* user info is optional */})
+    }
+    setIsInitializing(false)
   }, [clientId])
 
   // ── Auto-sync listener ────────────────────────────────────────────────────
@@ -125,13 +107,13 @@ export function useDriveSync(): DriveSync {
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
-  // NOTE: signIn must stay synchronous with the user's click event.
-  // Do NOT add any async awaits or setState calls before requestToken()
-  // or the browser will treat it as a programmatic popup and block it.
+  // Redirect the browser to Google's OAuth page.
+  // No popup — the user navigates away and comes back via /auth/callback.
   const signIn = useCallback(() => {
+    if (!clientId) return
     setErrorMessage(null)
-    requestToken() // must be called synchronously in the click handler
-  }, [])
+    redirectToGoogleOAuth(clientId)
+  }, [clientId])
 
   const signOut = useCallback(() => {
     clearToken()
