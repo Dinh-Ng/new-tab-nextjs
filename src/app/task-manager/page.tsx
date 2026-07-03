@@ -65,6 +65,12 @@ export default function Component() {
   const [remainingHours, setRemainingHours] = useState('')
   const [remainingMinutes, setRemainingMinutes] = useState('')
   const [remainingError, setRemainingError] = useState('')
+  const [priorityThresholdDays, setPriorityThresholdDays] = useState<string>('1')
+
+  const handleThresholdChange = (value: string) => {
+    setPriorityThresholdDays(value)
+    localStorage.setItem('priorityThresholdDays', value)
+  }
 
   const dispatchStorageEvent = () => {
     window.dispatchEvent(new CustomEvent('localStorageChanged'))
@@ -74,6 +80,10 @@ export default function Component() {
     const storedTasks = localStorage.getItem('tasks')
     if (storedTasks) {
       setTasks(JSON.parse(storedTasks))
+    }
+    const storedThreshold = localStorage.getItem('priorityThresholdDays')
+    if (storedThreshold) {
+      setPriorityThresholdDays(storedThreshold)
     }
   }, [])
 
@@ -181,9 +191,11 @@ export default function Component() {
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const isLessThanOneDay = diff < 24 * 60 * 60 * 1000 && diff > 0
+    const thresholdDays = isNaN(parseFloat(priorityThresholdDays)) ? 1 : parseFloat(priorityThresholdDays)
+    const thresholdMs = thresholdDays * 24 * 60 * 60 * 1000
+    const isWithinThreshold = diff < thresholdMs && diff > 0
     const isOverdue = diff < 0
-    return { days, hours, minutes, isLessThanOneDay, isOverdue, diffInMs: diff }
+    return { days, hours, minutes, isWithinThreshold, isOverdue, diffInMs: diff }
   }
 
   const toggleTaskDone = (id: number) => {
@@ -217,15 +229,15 @@ export default function Component() {
 
       if (
         a.important &&
-        aTimeLeft.isLessThanOneDay &&
-        (!b.important || !bTimeLeft.isLessThanOneDay)
+        aTimeLeft.isWithinThreshold &&
+        (!b.important || !bTimeLeft.isWithinThreshold)
       ) {
         return -1
       }
       if (
         b.important &&
-        bTimeLeft.isLessThanOneDay &&
-        (!a.important || !aTimeLeft.isLessThanOneDay)
+        bTimeLeft.isWithinThreshold &&
+        (!a.important || !aTimeLeft.isWithinThreshold)
       ) {
         return 1
       }
@@ -244,8 +256,9 @@ export default function Component() {
   const getUrgencyColor = (diff: number, isDark: boolean) => {
     if (diff < 0) return isDark ? 'hsl(0, 70%, 50%)' : 'hsl(0, 90%, 45%)'
 
-    const oneDay = 24 * 60 * 60 * 1000
-    const ratio = Math.max(0, Math.min(1, diff / oneDay))
+    const thresholdDays = isNaN(parseFloat(priorityThresholdDays)) ? 1 : parseFloat(priorityThresholdDays)
+    const thresholdMs = thresholdDays * 24 * 60 * 60 * 1000
+    const ratio = thresholdMs > 0 ? Math.max(0, Math.min(1, diff / thresholdMs)) : 0
 
     if (isDark) {
       const hue = 40 + ratio * 20
@@ -448,7 +461,7 @@ export default function Component() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row">
           {AddTaskDialog}
 
-          <div className="flex w-full flex-col gap-4 sm:flex-row">
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex w-full items-center sm:w-[250px]">
               <Filter className="mr-2 size-4 shrink-0 text-muted-foreground" />
               <Select
@@ -468,6 +481,20 @@ export default function Component() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 shadow-sm text-sm">
+              <span className="font-medium text-muted-foreground">Pin important tasks due in:</span>
+              <Input
+                type="number"
+                min="0"
+                step="any"
+                value={priorityThresholdDays}
+                onChange={(e) => handleThresholdChange(e.target.value)}
+                className="h-8 w-16 text-center p-1 focus-visible:ring-1"
+                placeholder="1"
+              />
+              <span className="font-medium text-muted-foreground">days</span>
             </div>
           </div>
         </div>
@@ -506,9 +533,9 @@ export default function Component() {
         {/* Task Grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredAndSortedTasks.map((task) => {
-            const { days, hours, minutes, isLessThanOneDay, isOverdue, diffInMs } =
+            const { days, hours, minutes, isWithinThreshold, isOverdue, diffInMs } =
               calculateTimeLeft(task.endDate, task.endTime)
-            const urgencyColor = !task.isDone && (isLessThanOneDay || isOverdue)
+            const urgencyColor = !task.isDone && (isWithinThreshold || isOverdue)
               ? getUrgencyColor(diffInMs, isDark)
               : undefined
 
@@ -548,7 +575,7 @@ export default function Component() {
                         } ${
                           !task.isDone && isOverdue
                             ? 'text-red-500 dark:text-red-400/90'
-                            : !task.isDone && isLessThanOneDay
+                            : !task.isDone && isWithinThreshold
                               ? 'text-amber-600 dark:text-amber-400/90'
                               : ''
                         }`}
@@ -586,7 +613,7 @@ export default function Component() {
                       className={`text-sm font-medium ${
                         isOverdue
                           ? 'text-red-500/90 dark:text-red-400/80'
-                          : isLessThanOneDay
+                          : isWithinThreshold
                             ? 'text-amber-600 dark:text-amber-400/80'
                             : 'text-muted-foreground/80'
                       }`}
