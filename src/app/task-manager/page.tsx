@@ -1,4 +1,4 @@
-'use client'
+  'use client'
 
 import React, { useEffect, useState } from 'react'
 import { AlertCircle, CheckSquare, Filter, PlusCircle, Trash } from 'lucide-react'
@@ -35,6 +35,7 @@ interface Task {
   tags: string[]
   isDone: boolean
   important: boolean
+  priorityThresholdDays?: number | string
 }
 
 type DeadlineType = 'date' | 'remaining'
@@ -65,11 +66,13 @@ export default function Component() {
   const [remainingHours, setRemainingHours] = useState('')
   const [remainingMinutes, setRemainingMinutes] = useState('')
   const [remainingError, setRemainingError] = useState('')
-  const [priorityThresholdDays, setPriorityThresholdDays] = useState<string>('1')
 
-  const handleThresholdChange = (value: string) => {
-    setPriorityThresholdDays(value)
-    localStorage.setItem('priorityThresholdDays', value)
+  const updateTaskThreshold = (id: number, threshold: string | number) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, priorityThresholdDays: threshold } : task
+      )
+    )
   }
 
   const dispatchStorageEvent = () => {
@@ -80,10 +83,6 @@ export default function Component() {
     const storedTasks = localStorage.getItem('tasks')
     if (storedTasks) {
       setTasks(JSON.parse(storedTasks))
-    }
-    const storedThreshold = localStorage.getItem('priorityThresholdDays')
-    if (storedThreshold) {
-      setPriorityThresholdDays(storedThreshold)
     }
   }, [])
 
@@ -184,14 +183,14 @@ export default function Component() {
     }
   }
 
-  const calculateTimeLeft = (endDate: string, endTime: string) => {
+  const calculateTimeLeft = (endDate: string, endTime: string, customThreshold?: number | string) => {
     const now = new Date()
     const deadline = new Date(`${endDate}T${endTime}`)
     const diff = deadline.getTime() - now.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const thresholdDays = isNaN(parseFloat(priorityThresholdDays)) ? 1 : parseFloat(priorityThresholdDays)
+    const thresholdDays = isNaN(parseFloat(String(customThreshold))) ? 1 : parseFloat(String(customThreshold))
     const thresholdMs = thresholdDays * 24 * 60 * 60 * 1000
     const isWithinThreshold = diff < thresholdMs && diff > 0
     const isOverdue = diff < 0
@@ -224,8 +223,8 @@ export default function Component() {
 
   const sortTasks = (tasks: Task[]): Task[] => {
     return tasks.sort((a, b) => {
-      const aTimeLeft = calculateTimeLeft(a.endDate, a.endTime)
-      const bTimeLeft = calculateTimeLeft(b.endDate, b.endTime)
+      const aTimeLeft = calculateTimeLeft(a.endDate, a.endTime, a.priorityThresholdDays)
+      const bTimeLeft = calculateTimeLeft(b.endDate, b.endTime, b.priorityThresholdDays)
 
       if (
         a.important &&
@@ -253,10 +252,10 @@ export default function Component() {
     filterTag ? tasks.filter((task) => task.tags.includes(filterTag)) : tasks
   )
 
-  const getUrgencyColor = (diff: number, isDark: boolean) => {
+  const getUrgencyColor = (diff: number, isDark: boolean, customThreshold?: number | string) => {
     if (diff < 0) return isDark ? 'hsl(0, 70%, 50%)' : 'hsl(0, 90%, 45%)'
 
-    const thresholdDays = isNaN(parseFloat(priorityThresholdDays)) ? 1 : parseFloat(priorityThresholdDays)
+    const thresholdDays = isNaN(parseFloat(String(customThreshold))) ? 1 : parseFloat(String(customThreshold))
     const thresholdMs = thresholdDays * 24 * 60 * 60 * 1000
     const ratio = thresholdMs > 0 ? Math.max(0, Math.min(1, diff / thresholdMs)) : 0
 
@@ -297,6 +296,7 @@ export default function Component() {
               tags: [],
               isDone: false,
               important: false,
+              priorityThresholdDays: '1',
             })
             setRemainingDays('')
             setRemainingHours('')
@@ -433,6 +433,7 @@ export default function Component() {
                   setEditingTask({
                     ...editingTask,
                     important: checked as boolean,
+                    priorityThresholdDays: editingTask.priorityThresholdDays !== undefined ? editingTask.priorityThresholdDays : '1',
                   })
                 }
               }}
@@ -441,6 +442,26 @@ export default function Component() {
               Mark as Important
             </Label>
           </div>
+          {editingTask?.important && (
+            <div className="space-y-2">
+              <Label htmlFor="dialogPriorityThresholdDays">Priority Countdown Threshold (days)</Label>
+              <Input
+                id="dialogPriorityThresholdDays"
+                name="priorityThresholdDays"
+                type="number"
+                min="0"
+                step="any"
+                value={editingTask.priorityThresholdDays !== undefined ? editingTask.priorityThresholdDays : '1'}
+                onChange={(e) => {
+                  setEditingTask({
+                    ...editingTask,
+                    priorityThresholdDays: e.target.value,
+                  })
+                }}
+                placeholder="1"
+              />
+            </div>
+          )}
           <Button type="submit" className="w-full">
             {editingTask && editingTask.id !== 0 ? 'Update Task' : 'Create Task'}
           </Button>
@@ -461,7 +482,7 @@ export default function Component() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row">
           {AddTaskDialog}
 
-          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full flex-col gap-4 sm:flex-row">
             <div className="flex w-full items-center sm:w-[250px]">
               <Filter className="mr-2 size-4 shrink-0 text-muted-foreground" />
               <Select
@@ -481,20 +502,6 @@ export default function Component() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 shadow-sm text-sm">
-              <span className="font-medium text-muted-foreground">Pin important tasks due in:</span>
-              <Input
-                type="number"
-                min="0"
-                step="any"
-                value={priorityThresholdDays}
-                onChange={(e) => handleThresholdChange(e.target.value)}
-                className="h-8 w-16 text-center p-1 focus-visible:ring-1"
-                placeholder="1"
-              />
-              <span className="font-medium text-muted-foreground">days</span>
             </div>
           </div>
         </div>
@@ -518,7 +525,7 @@ export default function Component() {
             {!filterTag && (
               <Button
                 onClick={() => {
-                  setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, important: false })
+                  setEditingTask({ id: 0, name: '', endDate: '', endTime: '', tags: [], isDone: false, important: false, priorityThresholdDays: '1' })
                   setIsOpen(true)
                 }}
                 className="mt-2"
@@ -534,9 +541,9 @@ export default function Component() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredAndSortedTasks.map((task) => {
             const { days, hours, minutes, isWithinThreshold, isOverdue, diffInMs } =
-              calculateTimeLeft(task.endDate, task.endTime)
+              calculateTimeLeft(task.endDate, task.endTime, task.priorityThresholdDays)
             const urgencyColor = !task.isDone && (isWithinThreshold || isOverdue)
-              ? getUrgencyColor(diffInMs, isDark)
+              ? getUrgencyColor(diffInMs, isDark, task.priorityThresholdDays)
               : undefined
 
             const importantColor = !task.isDone && task.important
@@ -628,18 +635,36 @@ export default function Component() {
                       Due: {task.endDate} at {task.endTime}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setTaskToDelete(task.id)
-                      setIsDeleteDialogOpen(true)
-                    }}
-                  >
-                    <Trash className="size-3.5" />
-                  </Button>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    {task.important && !task.isDone && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1 rounded-md border border-muted-foreground/10">
+                        <span>Pin threshold:</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={task.priorityThresholdDays !== undefined ? task.priorityThresholdDays : '1'}
+                          onChange={(e) => {
+                            updateTaskThreshold(task.id, e.target.value)
+                          }}
+                          className="h-6 w-12 text-center p-0.5 text-xs bg-background focus-visible:ring-1"
+                        />
+                        <span>d</span>
+                      </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setTaskToDelete(task.id)
+                        setIsDeleteDialogOpen(true)
+                      }}
+                    >
+                      <Trash className="size-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )
