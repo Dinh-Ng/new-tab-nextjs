@@ -223,6 +223,9 @@ export default function Component() {
 
   const sortTasks = (tasks: Task[]): Task[] => {
     return tasks.sort((a, b) => {
+      // Completed tasks always go to the bottom
+      if (a.isDone !== b.isDone) return a.isDone ? 1 : -1
+
       const aTimeLeft = calculateTimeLeft(a.endDate, a.endTime, a.priorityThresholdDays)
       const bTimeLeft = calculateTimeLeft(b.endDate, b.endTime, b.priorityThresholdDays)
 
